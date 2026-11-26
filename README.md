@@ -4,7 +4,7 @@
 
 **把分散的素材变成有原文依据的稿件，也能逐个平台看账号运营表现。**
 
-[![语言](https://img.shields.io/badge/语言-简体中文-c8521b?style=flat-square)](README.md) [![文档](https://img.shields.io/badge/文档-English-2b2927?style=flat-square)](README_EN.md) ![环境](https://img.shields.io/badge/Python-3.12-3776ab?style=flat-square) ![存储](https://img.shields.io/badge/存储-SQLite-38685c?style=flat-square) [![许可](https://img.shields.io/badge/许可-限非商业用途-a95c2e?style=flat-square)](LICENSE)
+[![语言](https://img.shields.io/badge/语言-简体中文-c8521b?style=flat-square)](README.md) [![文档](https://img.shields.io/badge/文档-English-2b2927?style=flat-square)](README_EN.md) ![环境](https://img.shields.io/badge/Python-3.12-3776ab?style=flat-square) ![存储](https://img.shields.io/badge/存储-SQLite-38685c?style=flat-square) [![许可](https://img.shields.io/badge/许可-AGPL--3.0--only-a95c2e?style=flat-square)](LICENSE)
 
 [核心亮点](#核心亮点) · [快速上手](#快速上手) · [工作台操作](#工作台操作) · [连接与数据位置](#连接与数据位置) · [使用许可](#使用许可)
 
@@ -107,7 +107,7 @@ Notion 使用 2022-06-28 数据库 API。输入连接读取用户选择的标题
 
 ## 使用许可
 
-本项目公开源码，采用面向软件的 **PolyForm Noncommercial 1.0.0**。使用、修改和分发须符合许可列出的允许用途及通知义务。商业使用需要另行获得权利人授权。此许可含有用途限制，不属于 OSI 定义的开源许可证。原文见 [LICENSE](LICENSE)，版权和第三方标志说明见 [NOTICE](NOTICE)。
+本项目采用 **GNU Affero 通用公共许可证第 3 版（AGPL-3.0-only）**，允许商用。分发时须遵守协议的源码提供条款。如果你修改工作台并通过网络提供服务，须向所有通过网络使用该修改版的用户显著提供免费获取对应源码的途径。详见 [LICENSE](LICENSE) 和 [第三方声明](NOTICE)。
 
 ## 关于作者
 
