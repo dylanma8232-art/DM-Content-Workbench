@@ -4,7 +4,7 @@ from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = '''
-README.md README_EN.md LICENSE NOTICE assets/evidence.png requirements.txt Dockerfile compose.yaml .dockerignore .dm.env.example .gitignore
+README.md README_EN.md LICENSE NOTICE assets/overview.png assets/evidence.png assets/draft-review.png requirements.txt Dockerfile compose.yaml .dockerignore .dm.env.example .gitignore
 .github/workflows/check.yml tools/build_release.py
 app.py analysis.py backup.py collection.py connections.py extraction.py integrations.py references.py
 web/index.html web/accounts.js web/dashboard.js web/integrations.js web/library.js

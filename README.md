@@ -1,114 +1,164 @@
 <div align="center">
 
-# 内容工作台（DM-Content-Workbench）
+# 内容工作台 (`DM-Content-Workbench`)
 
-**把分散的素材变成有原文依据的稿件，也能逐个平台看账号运营表现。**
+**把分散的采访与素材变成有原文依据的选题和定稿，同时在一个页面看齐各平台账号运营日报**
 
-[![语言](https://img.shields.io/badge/语言-简体中文-c8521b?style=flat-square)](README.md) [![文档](https://img.shields.io/badge/文档-English-2b2927?style=flat-square)](README_EN.md) ![环境](https://img.shields.io/badge/Python-3.12-3776ab?style=flat-square) ![存储](https://img.shields.io/badge/存储-SQLite-38685c?style=flat-square) [![许可](https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-b45309?style=flat-square)](LICENSE)
+<p>
+  <a href="README.md"><img alt="简体中文" src="https://img.shields.io/badge/语言-简体中文-c8521b?style=flat-square"></a>
+  <a href="README_EN.md"><img alt="English" src="https://img.shields.io/badge/文档-English-2b2927?style=flat-square"></a>
+  <img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-3776ab?style=flat-square">
+  <img alt="本地存储 SQLite" src="https://img.shields.io/badge/存储-本地_SQLite-38685c?style=flat-square">
+  <a href="LICENSE"><img alt="许可证: CC BY-NC-SA 4.0" src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-b45309?style=flat-square"></a>
+</p>
 
-[核心亮点](#核心亮点) · [快速上手](#快速上手) · [工作台操作](#工作台操作) · [连接与数据位置](#连接与数据位置) · [使用许可](#使用许可)
+[核心亮点一览](#核心亮点一览) · [3 步快速上手](#3-步快速上手) · [功能模块速查](#功能模块速查) · [进阶配置与运维](#进阶配置与运维) · [使用许可](#使用许可)
 
 </div>
 
-## 核心亮点
+---
 
-- **选题时能找回原话。** 把访谈和观察记录合成一个批次，工作台会列出候选选题、推荐依据和对应原句，你核对后再定题。
-- **改稿之后还能追溯。** 审核绑定具体版本，导出时能选定稿，也能从稿件回到原始素材。
-- **看运营和做内容各有入口。** 首页按平台看日报和趋势，每日工作流里看批次进度，采集渠道页配置来源和频率。
+## 为什么需要它？
 
-![从两份原始材料核对同一个选题的依据](assets/evidence.png)
+做内容创作或自媒体运营时，最耗神的通常不是写字本身，而是三个反复出现的卡点：
 
-## 快速上手
+1. **素材散落一地，写着写着找不到原话**：采访记录、PDF 报告、音视频转写和网页摘录分散在不同文件夹里，定选题和终审时很难核对哪句话出自哪份原始材料。
+2. **改稿版本一团糟，审核意见对不上号**：来回改了三四版，不知道审过的是哪一版，同题衍生稿也容易互相覆盖。
+3. **运营数据天天切后台**：公众号、小红书、B 站、抖音各看各的，没法在同一张面板里对照近七天趋势，也难以把内容产出和账号表现连起来复盘。
 
-使用 Python 3.12，在仓库根目录执行：
+**内容工作台**把「多平台账号日报 + 素材采集清洗 + 跨素材原文核对 + 版本审稿导出」收进一个纯本地 SQLite 工作台，不依赖外部云账号也能跑通全流程，需要时再按需接上大模型、Notion 或第三方接口。
 
-    python3 -m venv .venv
-    .venv/bin/python -m pip install -r requirements.txt
-    .venv/bin/python -m uvicorn app:app --host 127.0.0.1 --port 8765
+---
 
-Windows 通过 py -3.12 -m venv .venv 创建环境，后续使用 .venv\Scripts\python.exe 替代 .venv/bin/python。打开 http://127.0.0.1:8765 。首次打开进入账号运营总览。点击「初始化工作台」填写项目名、默认受众和文体，选择数据目录，并按需设置首个来源。本地 SQLite 已自动初始化。外部来源、模型、转写与 Notion 均可稍后添加。已有运行或项目配置的工作区直接打开总览。
+## 核心亮点一览
 
-每次运行独立保存字段映射、清洗阈值、关键词、原始材料、阶段结果与稿件版本。清洗在本次导入范围内按规范化正文去重；分析优先摘录包含指定关键词的句子。未命中时采用第一句。每次运行选定一个候选制作草稿。
+<p align="center">
+  <img src="assets/overview.png" alt="账号运营总览 — 多平台粉丝、阅读播放、互动数据与近七天趋势一屏看齐" width="100%">
+  <br><sub><b>账号运营总览</b>：公众号、小红书、B 站、抖音等平台数据与近 7 天趋势同屏汇总，支持手动录入、CSV 导入与第三方接口拉取</sub>
+</p>
 
-## 工作台操作
+<table>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <img src="assets/evidence.png" alt="选题库与跨素材原文依据核对" width="100%">
+      <br><sub><b>选题与原文核对</b>：跨多份原始素材自动聚合共同线索，每条推荐理由都带原文摘录与一键回溯原始素材</sub>
+    </td>
+    <td width="50%" align="center" valign="top">
+      <img src="assets/draft-review.png" alt="五阶段内容流水线与版本审稿导出" width="100%">
+      <br><sub><b>版本审稿与导出</b>：采集 → 清洗 → 分析 → 选题 → 成稿五步闭环，审核结论绑定具体版本，支持 Markdown 导出与第三方推送</sub>
+    </td>
+  </tr>
+</table>
 
-账号总览显示所选日期的账号指标、各平台表现及七天趋势。账号和来源由使用者自行添加。每日工作流用于查看批次进度、待确认选题与待审稿件。采集动态从启用批次记录后开始累计。素材库支持搜索、清洗对照和跨来源选取；选中同一项目的素材后可合并为新的分析批次。分析与选题可核对候选理由与原文，稿件库可查看当前审核状态，打开批次后可编辑和导出指定版本。以上操作在本机和自托管部署共用同一套页面。
+---
 
-1. 打开项目与来源设置，可建立新项目，设置最短正文、关键词、跨素材主题、受众及稿件形式。项目默认值用于之后的运行。单次导入可调整字段和清洗规则，先点预览，再创建运行。
-2. 来源支持 HTTPS RSS/Atom、静态网页、JSON API 与 Notion 数据库。先试采再保存。刷新间隔 0 表示手动；服务运行时定期检查来源。相同来源按条目标识和内容指纹识别新增、变更及重复，失败保留旧数据。网页抽取 HTTPS 响应里的可读文字；需要浏览器执行的动态内容可手动导入。JSON API 使用 GET，可配置记录路径、字段、稳定 ID、同源下一页 URL 字段和 Bearer 授权（环境变量名以 DM_API_TOKEN_ 开头），每轮最多 10 页、2000 条。RSS 历史覆盖取决于来源的保留窗口。
-3. 进入运行后依次清洗、提取证据和选题。跨素材分析按自选主题及重复线索推荐选题，列出每个建议的支持材料。保留的运行可在刷新或重启服务后继续。重新计算会从该批原始材料建立新运行。
-4. 生产阶段可用本地摘录或模型生成。编辑、保存、审核并导出；同题衍生稿独立保留各自的历史版本。审核决定绑定稿件版本。模型请求会把选题、选定证据、受众和格式发送到配置的服务。
+## 3 步快速上手
 
-文件选择器也支持 PDF 和常见音视频。PDF 按页提取（10 MB、200 页以内）；启用 OCR 并安装 Poppler、Tesseract 后，可识别最多 20 张没有文本层的扫描页。音视频先通过 FFmpeg 提取音轨，再发送到用户配置的转写服务（上传上限 25 MB）。提取结果可以在导入前核对，工作区保存从文件得到的文本及文件名，原始二进制文件由用户保管。
+需要 **Python 3.12**（本地 SQLite 自动初始化，无需配置数据库或云账号）：
 
-## 连接与数据位置
+```bash
+# 1. 创建并激活虚拟环境，安装依赖
+python3 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
 
-在启动进程的环境中设置可选变量，凭据不随工作区备份导出。
+# 2. 启动工作台服务
+.venv/bin/python -m uvicorn app:app --host 127.0.0.1 --port 8765
 
-本地也可复制 .dm.env.example 为 .dm.env，填好要启用的项目，再在上述启动命令末尾加 --env-file .dm.env。文件已加入 Git 忽略规则。在「配置 → 数据存储」可以迁移全部项目到新目录。服务会复制并校验 SQLite，随后将读写切换到新位置，旧库保留。启动目录中的 storage-settings.sqlite3 记录当前位置，重启时请沿用相同的 DM_DATA_DIR。
+# 3. 浏览器打开 http://127.0.0.1:8765，点击「初始化工作台」即可开始
+```
 
-在「配置 → AI 与多媒体引擎」可查看实际 SQLite 目录、执行小额模型生成测试、验证指定 Notion 库的读取权限，以及检查转写和 OCR 的本地准备情况。转写与 OCR 的最终结果通过上传短样本验证。Notion 写入权限和结果通过快照回读验证。
+> **Windows 提示**：用 `py -3.12 -m venv .venv` 创建环境，后续把 `.venv/bin/python` 换为 `.venv\Scripts\python.exe`。  
+> **Docker 一键启动**：装有 Docker Compose 2.24.0+ 时，仓库根目录直接运行 `docker compose up --build -d --wait`，浏览器访问 `http://127.0.0.1:8765`。
+
+---
+
+## 功能模块速查
+
+```mermaid
+flowchart LR
+    A["多渠道采集<br/>CSV / PDF / 音视频 / RSS / 网页 / Notion"] --> B["批次清洗与素材库<br/>去重 · 关键词 · 跨来源合并"]
+    B --> C["选题库与原文核对<br/>聚合共同线索 · 一键回溯原句"]
+    C --> D["版本审稿与交付<br/>本地摘录或模型成稿 · 绑定版本审核 · 导出/推送"]
+    E["多平台账号日报<br/>手动 / CSV / HTTPS 接口"] --> F["账号运营总览<br/>多平台卡片 · 近 7 天趋势复盘"]
+```
+
+| 模块 | 核心能力 |
+|---|---|
+| **账号总览** | 按日期查看各平台粉丝、阅读/播放、互动、发布数及近 7 天趋势；支持手动录入、CSV 导入与第三方 GET 接口拉取 |
+| **每日工作流** | 集中展示当前批次进度、待确认选题与待审稿件，打开任意批次即可接着上次进度继续 |
+| **采集渠道与导入** | 支持 CSV/TXT、PDF（含可选 OCR 扫描页）、音视频（FFmpeg + 转写接口）、HTTPS RSS/Atom、静态网页、JSON API 与 Notion 数据库 |
+| **素材库** | 支持按关键词与日期检索、清洗对照、跨来源勾选合并为新的分析批次 |
+| **选题库** | 跨素材按自选主题和重复线索推荐候选选题，列出每条建议对应的原始摘录并支持直达原文 |
+| **成稿库与审稿** | 支持本地摘录或大模型生成草稿；审核决定严格绑定稿件版本，同题衍生稿各自保留完整版本历史，支持导出 Markdown 或推送 Webhook |
+
+---
+
+## 进阶配置与运维
+
+以下内容默认无需配置即可本地使用，按需展开查看：
+
+<details>
+<summary><b>1. 环境变量与本地 <code>.dm.env</code>（模型 / Notion / 转写 / OCR / 数据目录）</b></summary>
+
+复制 `.dm.env.example` 为 `.dm.env`（已纳入 `.gitignore`，不会随备份导出），启动时在 `uvicorn` 命令末尾加 `--env-file .dm.env`。在页面「配置 → AI 与多媒体引擎」可直接校验存储目录、模型连通性、Notion 权限及 OCR/转写就绪状态。
 
 | 环境变量 | 用途 |
-| --- | --- |
-| DM_DATA_DIR | 初始数据目录和存储位置配置所在目录，默认 .dm-data |
-| DM_MODEL_BASE_URL | Chat Completions 接口根地址，通常以 /v1 结尾 |
-| DM_MODEL_NAME、DM_MODEL_KEY | 模型标识及可选密钥 |
-| DM_NOTION_TOKEN | 用户自建 Notion integration 的凭据；在 Notion 将相应数据库授权给它 |
-| DM_ASR_BASE_URL | 兼容 OpenAI 音频转写的根地址，通常以 /v1 结尾 |
-| DM_ASR_MODEL、DM_ASR_KEY | 转写模型标识及可选密钥 |
-| DM_OCR_ENABLED、DM_OCR_LANG | 将启用值设为 1；语言默认 eng，容器内也可选择 chi_sim 或 chi_sim+eng |
-| DM_RSS_TRUSTED_HOSTS | 可选。使用本机 DNS 代理时，可显式列出信任的订阅主机名，以逗号分隔。默认仅接受解析至公网的 HTTPS 地址；连接不跟随重定向 |
+|---|---|
+| `DM_DATA_DIR` | 初始数据目录和存储位置配置所在目录，默认 `.dm-data`（也可在「配置 → 数据存储」一键迁移 SQLite 到新目录） |
+| `DM_MODEL_BASE_URL` | Chat Completions 接口根地址（通常以 `/v1` 结尾） |
+| `DM_MODEL_NAME`、`DM_MODEL_KEY` | 模型标识及可选密钥 |
+| `DM_NOTION_TOKEN` | 自建 Notion Integration 凭据（需在 Notion 将目标库授权给它） |
+| `DM_ASR_BASE_URL` | 兼容 OpenAI 音频转写的接口根地址（通常以 `/v1` 结尾） |
+| `DM_ASR_MODEL`、`DM_ASR_KEY` | 转写模型标识及可选密钥 |
+| `DM_OCR_ENABLED`、`DM_OCR_LANG` | 设为 `1` 开启 PDF 扫描页 OCR（需安装 Poppler 与 Tesseract）；语言默认 `eng`，可选 `chi_sim` 或 `chi_sim+eng` |
+| `DM_RSS_TRUSTED_HOSTS` | 可选，逗号分隔的信任订阅主机名（默认仅允许解析至公网的 HTTPS 地址且不跟随重定向） |
 
-Notion 使用 2022-06-28 数据库 API。输入连接读取用户选择的标题或富文本属性；输出连接仅需目标库的标题属性。每次送达保存一个可回读的 JSON 业务快照，包括原始记录、分析、选题、稿件和版本。项目设置指定目标库后，每次运行变更自动排队；也可以按运行手动保存。界面提供回执和重试。外部写入结果未知时优先回读核实，人工改动过的快照会报告冲突。单个快照上限约 350 KB；更大的业务数据可使用 SQLite 备份。Notion 作为远端版本存档，本地库始终保存运行状态和完整工作数据。
+</details>
 
-可在项目设置用快照页面 ID 恢复出独立运行，继续选题、审稿或导出。恢复默认仅写本地，原页面保留。
+<details>
+<summary><b>2. 多媒体导入与自动采集细节（PDF / 音视频 / RSS / JSON API）</b></summary>
 
-仅以单个服务进程监听本机回环地址。定时采集与 Notion 同步需服务持续运行。同一实例内的所有项目共享服务环境变量和本机凭据，项目用于分类，不能充当多用户访问边界。
+- **PDF 与音视频**：PDF 按页提取（上限 10 MB、200 页；启用 OCR 后可识别最多 20 页无文本层扫描页）；音视频通过 FFmpeg 抽取音轨后送至自配转写服务（上传上限 25 MB）。工作区只存提取后的文本与文件名，原始二进制文件由你自行保管。
+- **定时采集源**：支持 HTTPS RSS/Atom、静态网页（抽取可读正文）、JSON API（GET，支持记录路径、字段映射、稳定 ID、同源下一页 URL 及 `DM_API_TOKEN_*` Bearer 鉴权，每轮最多 10 页 / 2000 条）与 Notion 数据库。刷新间隔设为 `0` 表示手动，非零值在服务运行期间定期拉取，按条目标识和内容指纹识别新增、变更与重复。
 
-## 云端自托管
+</details>
 
-在装有 Docker Compose 2.24.0+ 的主机，在仓库根目录执行。选用连接器时，可在仓库根目录创建未纳入 Git 的 .dm.env 写入相应变量。
+<details>
+<summary><b>3. Notion 双向快照与第三方日报 / 稿件 Webhook 接口</b></summary>
 
-    docker compose up --build -d --wait
+- **Notion 快照**：使用 `2022-06-28` 数据库 API；每次送达保存可回读的 JSON 业务快照（含原始记录、分析、选题、稿件与版本，单快照上限约 350 KB），支持冲突检测与按快照页面 ID 恢复独立本地运行。
+- **第三方日报来源（GET）**：在「配置 → 第三方连接」配置 HTTPS 地址与 `DM_API_TOKEN_*` 环境变量名，映射平台、账号、日期、期末粉丝、阅读/播放、互动、发布 7 个字段（支持同源翻页，最多 10 页 / 2000 条），预览确认后更新日报。
+- **第三方稿件接收端（POST）**：审核通过后可手动推送 JSON（含 `schema_version=1`、`event="draft.approved"`、`project_id`、`run_id`、`version`、`title`、`markdown`），携带 `Idempotency-Key` 方便接收端幂等去重。
 
-服务在主机的 127.0.0.1:8765 可用，默认数据保存在 Compose 的 workbench 卷，挂载到容器 /data。容器内另选目录时，请先将目标目录挂载为持久卷并确保容器用户有写权限；页面填写容器内路径。远程浏览器可通过云主机的 SSH 端口转发访问：
+</details>
 
-    ssh -N -L 8765:127.0.0.1:8765 user@server
+<details>
+<summary><b>4. 云端自托管（Docker Compose）、备份恢复、验收测试与打包分发</b></summary>
 
-然后打开本机 http://127.0.0.1:8765。SSH 承担访问控制。停止应使用 docker compose down；删除卷会同时清除工作区数据。重启后原稿件、进度和来源配置继续使用同一卷。
+- **Docker 自托管**：根目录运行 `docker compose up --build -d --wait`，数据默认落在 `workbench` 持久卷（`/data`）。云主机建议保持监听 `127.0.0.1:8765`，通过 SSH 端口转发安全访问：`ssh -N -L 8765:127.0.0.1:8765 user@server`。
+- **单实例边界**：单进程监听本机回环地址，同一实例内所有项目共享服务环境变量与本机凭据，项目用于业务分类，不作为多用户权限隔离边界。
+- **备份与恢复**：
+  ```bash
+  python backup.py export workbench-backup.sqlite3
+  python backup.py restore workbench-backup.sqlite3 --directory restored-workspace
+  ```
+- **单元测试与浏览器验收**：
+  ```bash
+  python -m unittest discover -s tests -v
+  python tests/browser_acceptance.py   # 需安装 playwright 与 Chrome，全程使用临时库
+  ```
+- **打包纯净分发包**：运行 `python tools/build_release.py` 生成 `dist/DM-Content-Workbench.zip`（仅打包代码、示例配置、说明与测试，不含本机数据库、备份或连接凭据）。
 
-## 备份、恢复与检查
+</details>
 
-    python backup.py export workbench-backup.sqlite3
-    python backup.py restore workbench-backup.sqlite3 --directory restored-workspace
-    python -m unittest discover -s tests -v
-
-浏览器验收使用独立的临时数据库，包含桌面与手机宽度的工作流。在测试环境安装 Playwright 和 Chrome 后运行：
-
-    python -m pip install playwright
-    python -m playwright install chrome
-    python tests/browser_acceptance.py
-
-恢复到新目录，校验后设置 DM_DATA_DIR 指向恢复目录并启动。无需在原数据上执行覆盖操作。备份包含业务材料、稿件及来源地址，请自行保管。凭据在目标机器上单独配置。
-
-### 第三方连接
-
-在「配置 → 第三方连接」为当前项目分别保存一个日报来源和一个稿件接收端。接口使用 HTTPS，可选 Bearer 鉴权。请在服务环境中设置形如 `DM_API_TOKEN_ANALYTICS` 的变量，在页面填写变量名。
-
-- 日报来源接受 GET。记录数组可放在顶层或指定路径（例如 `data.items`）。每条记录需要映射平台、账号、日期、期末粉丝、当日阅读或播放、互动、发布七个字段。支持同源下一页 URL（最多 10 页、合计 2000 条）。预览后手动导入，同项目、平台、账号、日期的日报会更新。确认时若读取内容变化，需要重新预览。
-- 稿件接收端接受 JSON POST。在最新稿件审核通过后，展开「发送到第三方接口」，核对地址和正文后确认发送。负载包含 `schema_version`（1）、`event`（draft.approved）、project_id、run_id、version、title、markdown。2xx 表示接收端已受理。接收端应按 `Idempotency-Key` 去重，并在数据持久化后返回成功状态；网络超时后使用同一键重试。
-
-## 分发给其他使用者
-
-运行 `python tools/build_release.py` 生成 `dist/DM-Content-Workbench.zip`。交付此压缩包即可，每位使用者需准备 Python 3.12，解压后按「快速上手」安装依赖并创建自己的项目。首次安装依赖需要可访问 Python 包源。打包清单仅收录程序、示例配置、说明和测试，不收录本机数据库、备份、截图、研究文档或实际连接配置。
-
-平台标志采用 Simple Icons 13.21.0 的图形（CC0），用于标识相应服务；品牌商标归各自权利人所有。
+---
 
 ## 使用许可
 
 本项目采用 **[CC BY-NC-SA 4.0](LICENSE)**（知识共享 署名-非商业性使用-相同方式共享 4.0 国际）协议，仅供个人学习与非商业用途使用，**禁止商业使用或打包售卖**；修改与再分发需保留署名并沿用相同协议。详见 [LICENSE](LICENSE) 和 [第三方声明](NOTICE)。
 
+> 平台标志采用 Simple Icons 13.21.0 的图形（CC0），品牌商标归各自权利人所有。
+
 ## 关于作者
 
-作者：**[dylanma8232-art](https://github.com/dylanma8232-art)** · **[返回个人主页查看更多项目 →](https://github.com/dylanma8232-art)**
+作者：**[dylanma8232-art](https://github.com/dylanma8232-art)** · **[返回个人主页查看更多开源项目 →](https://github.com/dylanma8232-art)**
