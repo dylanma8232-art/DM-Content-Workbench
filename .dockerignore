@@ -1,0 +1,12 @@
+**
+!requirements.txt
+!app.py
+!integrations.py
+!connections.py
+!extraction.py
+!analysis.py
+!backup.py
+!collection.py
+!references.py
+!web/
+!web/**

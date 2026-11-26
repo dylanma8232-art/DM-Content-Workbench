@@ -1,0 +1,13 @@
+services:
+  dm:
+    build: .
+    ports:
+      - "127.0.0.1:8765:8765"
+    volumes:
+      - workbench:/data
+    env_file:
+      - path: .dm.env
+        required: false
+    restart: unless-stopped
+volumes:
+  workbench:
