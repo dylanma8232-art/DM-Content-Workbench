@@ -26,6 +26,6 @@ SQLite keeps projects, reports, materials and drafts on the host. Configure a de
 
 ## License
 
-Licensed under the **GNU Affero General Public License, version 3 only (AGPL-3.0-only)**. Commercial use is permitted. Redistribution is subject to the corresponding-source provisions. If you run a modified version as a network service, prominently offer all users interacting with it remotely a way to obtain its corresponding source at no charge. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+Licensed under **[CC BY-NC-SA 4.0](LICENSE)** (Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International) for personal and non-commercial use. Commercial use is prohibited; adaptations must preserve attribution and be shared under the same license. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
 
 Author: [dylanma8232-art](https://github.com/dylanma8232-art).
