@@ -1,6 +1,6 @@
 """Back up all projects or restore into a fresh workspace directory."""
 
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 import argparse
 import os
 import sqlite3
@@ -25,28 +25,29 @@ def workspace_path(exclusive=False):
         registry.close()
 
 
-def copy_database(source, destination):
+def open_source(source):
     if not source.is_file():
         raise ValueError("找不到源数据库")
+    return sqlite3.connect(source.resolve().as_uri() + "?mode=ro", uri=True)
+
+
+def verify_database(source):
+    with closing(open_source(source)) as conn:
+        if any(row[0] != 'ok' for row in conn.execute('PRAGMA quick_check')):
+            raise ValueError('备份完整性校验失败')
+        columns = {row[1] for row in conn.execute('PRAGMA table_info(runs)')}
+        if not {'id', 'name', 'stage', 'payload', 'created'} <= columns:
+            raise ValueError('数据库缺少工作台运行记录字段')
+
+
+def copy_database(source, destination):
     destination.parent.mkdir(parents=True, exist_ok=True)
     descriptor = os.open(destination, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
     os.close(descriptor)
     try:
-        origin = sqlite3.connect(source.resolve().as_uri() + "?mode=ro", uri=True)
-        try:
-            if not origin.execute(
-                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='runs'"
-            ).fetchone():
-                raise ValueError("数据库缺少运行记录表")
-            replica = sqlite3.connect(destination)
-            try:
-                origin.backup(replica)
-                if replica.execute("PRAGMA quick_check").fetchone()[0] != "ok":
-                    raise ValueError("备份完整性校验失败")
-            finally:
-                replica.close()
-        finally:
-            origin.close()
+        with closing(open_source(source)) as origin, closing(sqlite3.connect(destination)) as replica:
+            origin.backup(replica)
+        verify_database(destination)
     except Exception:
         destination.unlink(missing_ok=True)
         raise
@@ -54,14 +55,36 @@ def copy_database(source, destination):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("action", choices=["export", "restore"])
-    parser.add_argument("file", type=Path)
+    parser.add_argument("action", choices=["export", "restore", "verify", "location"])
+    parser.add_argument("file", type=Path, nargs='?')
     parser.add_argument(
         "--directory",
         type=Path,
         default=None,
     )
     args = parser.parse_args()
-    with workspace_path() as (active, _):
-        local = (args.directory or active) / 'workbench.sqlite3'
-        copy_database(local, args.file) if args.action == 'export' else copy_database(args.file, local)
+    if args.action != 'location' and args.file is None:
+        parser.error('请指定备份文件路径')
+
+    def transfer(directory):
+        local = directory / 'workbench.sqlite3'
+        if args.action == 'export':
+            copy_database(local, args.file)
+        else:
+            copy_database(args.file, local)
+
+    try:
+        if args.action == 'verify':
+            verify_database(args.file)
+        elif args.action == 'location':
+            with workspace_path() as (active, _):
+                print(active / 'workbench.sqlite3')
+        elif args.directory:
+            transfer(args.directory)
+        else:
+            with workspace_path() as (active, _):
+                transfer(active)
+        if args.action != 'location':
+            print('数据库完整性与运行记录字段校验通过')
+    except (OSError, ValueError, sqlite3.Error) as exc:
+        parser.exit(1, f'操作失败：{exc}\n')

@@ -9,23 +9,32 @@ import sqlite3
 import threading
 import time
 import uuid
-from contextlib import asynccontextmanager, contextmanager
+import zipfile
+from contextlib import asynccontextmanager, closing, contextmanager
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Annotated, Literal
 
 from fastapi import FastAPI, HTTPException, Query, Request, UploadFile
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
+import account_reporting
 import integrations
+import publishing
 import connections
 import extraction
 from backup import copy_database, workspace_path
 from analysis import recommendations
 from collection import mount_collection
+import collection_tasks
+import processing_settings
+import online_libraries
+import workflow_engine
+import service_credentials
+import draft_archive
 from references import mount_references
 
 ROOT = Path(__file__).resolve().parent
@@ -43,12 +52,22 @@ async def lifespan(application):
                       ON runs(project_id, id) WHERE {INGESTED_RUN}""")
     stop = threading.Event()
     worker = threading.Thread(target=schedule, args=(stop,), daemon=True)
+    def schedule_reports():
+        while not stop.wait(integrations.REPORT_POLL):
+            try:
+                application.state.sync_due_reports(stop)
+            except (OSError, RuntimeError, sqlite3.Error) as exc:
+                logging.getLogger(__name__).warning('日报调度失败 (%s)', type(exc).__name__)
+
+    report_worker = threading.Thread(target=schedule_reports, daemon=True)
     worker.start()
+    report_worker.start()
     try:
         yield
     finally:
         stop.set()
         worker.join(timeout=1)
+        report_worker.join()
 
 
 app = FastAPI(title="DM-内容工作台", lifespan=lifespan)
@@ -84,15 +103,23 @@ class StorageLocation(BaseModel):
     directory: str = Field(min_length=1, max_length=2048)
 
 
-@app.put('/api/storage')
-def set_storage(form: StorageLocation):
-    path = Path(form.directory.strip()).expanduser()
+def storage_destination(directory):
+    path = Path(directory.strip()).expanduser()
     if not path.is_absolute():
         raise HTTPException(422, '请输入运行工作台的电脑上的绝对目录路径')
     try:
         destination = path.resolve()
         if destination.is_relative_to((ROOT / 'web').resolve()):
             raise HTTPException(422, '数据不能存放在公开的网页目录中')
+        return destination
+    except (OSError, ValueError) as exc:
+        raise HTTPException(422, '无法解析数据目录') from exc
+
+
+@app.put('/api/storage')
+def set_storage(form: StorageLocation):
+    destination = storage_destination(form.directory)
+    try:
         with workspace_path(exclusive=True) as (current, registry):
             if destination != current:
                 copy_database(current / 'workbench.sqlite3', destination / 'workbench.sqlite3')
@@ -101,7 +128,7 @@ def set_storage(form: StorageLocation):
         raise HTTPException(409, '该目录已有同名数据库，请选择新的目录') from exc
     except (OSError, ValueError, sqlite3.Error) as exc:
         raise HTTPException(422, '无法复制或验证数据库，请检查路径、磁盘空间与写入权限') from exc
-    return {'data_dir': str(destination)}
+    return {'saved': True, 'storage': 'local'}
 
 
 class ImportForm(BaseModel):
@@ -125,6 +152,10 @@ class Action(BaseModel):
     engine: Literal["local", "model"] = "local"
     audience: str = Field(default="", max_length=200)
     style: str = Field(default="文章", max_length=100)
+    target_words: int | None = Field(default=None, ge=100, le=10000)
+    writing_requirements: str | None = Field(default=None, max_length=4000)
+    outline: str | None = Field(default=None, max_length=4000)
+    generation_max_tokens: int | None = Field(default=None, ge=256, le=8000)
 
 
 class Edit(BaseModel):
@@ -183,12 +214,18 @@ def persist(conn, run):
 
 
 def initialize(conn):
+    account_reporting.initialize(conn)
     integrations.initialize(conn)
     conn.execute("BEGIN IMMEDIATE")
     conn.execute(
         "CREATE TABLE IF NOT EXISTS projects(id INTEGER PRIMARY KEY, name TEXT UNIQUE, settings TEXT)"
     )
     conn.execute("INSERT OR IGNORE INTO projects VALUES(1,'默认项目','{}')")
+    conn.execute('''CREATE TABLE IF NOT EXISTS variant_requests (
+        source_id INTEGER NOT NULL, request_key TEXT NOT NULL, source_version INTEGER NOT NULL,
+        variant_id INTEGER NOT NULL, PRIMARY KEY(source_id, request_key))''')
+    publishing.initialize(conn)
+    collection_tasks.initialize(conn)
     if "project_id" not in [
         row["name"] for row in conn.execute("PRAGMA table_info(runs)")
     ]:
@@ -211,6 +248,11 @@ def initialize(conn):
     conn.execute('''CREATE TABLE IF NOT EXISTS platform_accounts (
         project_id INTEGER NOT NULL, platform TEXT NOT NULL, account TEXT NOT NULL,
         PRIMARY KEY(project_id, platform, account))''')
+    account_columns = {row['name'] for row in conn.execute('PRAGMA table_info(platform_accounts)')}
+    if 'platform_uid' not in account_columns:
+        conn.execute('ALTER TABLE platform_accounts ADD COLUMN platform_uid TEXT')
+    conn.execute('''CREATE UNIQUE INDEX IF NOT EXISTS platform_account_uid
+        ON platform_accounts(project_id, platform, platform_uid)''')
     conn.execute("""CREATE TABLE IF NOT EXISTS account_daily (
         project_id INTEGER NOT NULL, platform TEXT NOT NULL, account TEXT NOT NULL,
         day TEXT NOT NULL, followers INTEGER NOT NULL, views INTEGER NOT NULL,
@@ -248,9 +290,24 @@ class Rules(BaseModel):
     style: str = Field(default="文章", max_length=100)
     notion_database: str = Field(default="", max_length=100)
     topics: str = Field(default="", max_length=500)
+    dedup_mode: Literal['exact', 'similar', 'off'] = 'exact'
+    dedup_threshold: float = Field(default=.85, ge=.7, le=.99)
+    exclude_terms: str = Field(default='', max_length=2000)
+    remove_links: bool = False
+    analysis_engine: Literal['evidence', 'model'] = 'evidence'
+    evidence_count: int = Field(default=3, ge=1, le=5)
+    analysis_max_tokens: int = Field(default=2000, ge=256, le=8000)
+    topic_limit: int = Field(default=10, ge=1, le=20)
+    min_topic_sources: int = Field(default=1, ge=1, le=10)
+    target_words: int = Field(default=1200, ge=100, le=10000)
+    writing_requirements: str = Field(default='', max_length=4000)
+    outline: str = Field(default='', max_length=4000)
+    generation_max_tokens: int = Field(default=2000, ge=256, le=8000)
+    archive_library_id: int | None = Field(default=None, ge=1)
 
 
 class SetupForm(BaseModel):
+    directory: str | None = Field(default=None, min_length=1, max_length=2048)
     platform: str = Field(default='',max_length=80)
     source_address: str = Field(default='',max_length=2000)
     source_kind: Literal['rss','web','api','notion'] = 'rss'
@@ -258,6 +315,7 @@ class SetupForm(BaseModel):
     name: str = Field(min_length=1,max_length=100)
     audience: str = Field(default='',max_length=200)
     style: str = Field(default='文章',max_length=100)
+    collection: collection_tasks.TaskForm | None = None
 
 
 @app.get('/api/setup')
@@ -272,29 +330,57 @@ def complete_setup(form:SetupForm):
     name=form.name.strip()
     if not name:
         raise HTTPException(422,'请填写项目名称')
-    with database() as conn:
-        conn.execute('BEGIN IMMEDIATE')
-        existing=conn.execute('SELECT project_id FROM onboarding WHERE id=1').fetchone()
-        if existing:
-            return {'project_id':existing['project_id']}
-        rules=Rules(audience=form.audience,style=form.style.strip() or '文章')
-        existing_project=conn.execute('SELECT id,settings FROM projects WHERE name=?',(name,)).fetchone()
-        if existing_project:
-            project_id=existing_project['id']
-        else:
-            project_id=conn.execute('INSERT INTO projects(name,settings) VALUES(?,?)',(name,rules.model_dump_json())).lastrowid
-        if existing_project and existing_project['settings']=='{}':
-            conn.execute('UPDATE projects SET settings=? WHERE id=?',(rules.model_dump_json(),project_id))
-        if form.source_address.strip():
-            if not form.platform.strip():
-                raise HTTPException(422,'请填写首个采集平台名称')
-            conn.execute('''INSERT INTO sources(project_id,name,platform,kind,address,minutes,title_field,body_field)
-                VALUES(?,?,?,?,?,?,?,?)''', (project_id, form.platform.strip(), form.platform.strip(),
-                form.source_kind, form.source_address.strip(), form.minutes,
-                'Name' if form.source_kind == 'notion' else 'title',
-                'Body' if form.source_kind == 'notion' else 'body'))
-        conn.execute('INSERT INTO onboarding VALUES(1,?)',(project_id,))
-        return {'project_id':project_id}
+    replica = None
+    try:
+        # Hold the workspace lock through both setup and the registry commit.
+        with workspace_path(exclusive=True) as (current, registry):
+            source = current / 'workbench.sqlite3'
+            with closing(sqlite3.connect(source)) as conn:
+                existing = conn.execute('SELECT project_id FROM onboarding WHERE id=1').fetchone()
+            if existing:
+                return {'project_id': existing[0], 'created': False}
+            destination = storage_destination(form.directory) if form.directory else current
+            if destination != current:
+                target = destination / source.name
+                copy_database(source, target)
+                replica = target
+                registry.execute('INSERT OR REPLACE INTO location VALUES(1,?)', (str(destination),))
+            with closing(sqlite3.connect(replica or source)) as conn, conn:
+                conn.row_factory = sqlite3.Row
+                project_id = create_setup(conn, form, name)
+    except Exception as exc:
+        if replica is not None:
+            replica.unlink(missing_ok=True)
+        if isinstance(exc, FileExistsError):
+            raise HTTPException(409, '该目录已有同名数据库，请选择新的目录') from exc
+        if isinstance(exc, (OSError, ValueError, sqlite3.Error)):
+            raise HTTPException(422, '初始化失败，请检查数据目录和写入权限') from exc
+        raise
+    return {'project_id': project_id, 'created': True}
+
+
+def create_setup(conn, form, name):
+    conn.execute('BEGIN IMMEDIATE')
+    if form.source_address.strip() and not form.platform.strip():
+        raise HTTPException(422, '请填写首个采集平台名称')
+    rules = Rules(audience=form.audience, style=form.style.strip() or '文章')
+    existing = conn.execute('SELECT id,settings FROM projects WHERE name=?', (name,)).fetchone()
+    if existing:
+        project_id = existing['id']
+        if existing['settings'] == '{}':
+            conn.execute('UPDATE projects SET settings=? WHERE id=?', (rules.model_dump_json(), project_id))
+    else:
+        project_id = conn.execute('INSERT INTO projects(name,settings) VALUES(?,?)', (name, rules.model_dump_json())).lastrowid
+    if form.collection is not None:
+        collection_tasks.insert_task(conn, project_id, form.collection)
+    if form.source_address.strip():
+        conn.execute('''INSERT INTO sources(project_id,name,platform,kind,address,minutes,title_field,body_field)
+            VALUES(?,?,?,?,?,?,?,?)''', (project_id, form.platform.strip(), form.platform.strip(),
+            form.source_kind, form.source_address.strip(), form.minutes,
+            'Name' if form.source_kind == 'notion' else 'title',
+            'Body' if form.source_kind == 'notion' else 'body'))
+    conn.execute('INSERT INTO onboarding VALUES(1,?)', (project_id,))
+    return project_id
 
 
 def project_settings(conn, project_id):
@@ -329,22 +415,103 @@ def platform_identity(report):
 @app.put('/api/projects/{project_id}/platform-accounts')
 def register_account(project_id: int, settings: PlatformAccount):
     with database() as conn:
+        conn.execute('BEGIN IMMEDIATE')
         project_settings(conn, project_id)
-        conn.execute('INSERT OR IGNORE INTO platform_accounts VALUES(?,?,?)',
+        key = (project_id, *platform_identity(settings))
+        if account_reporting.resolve(conn, *key) != key[1:]:
+            raise HTTPException(409, '该名称是现有账号的历史标识，请核对账号')
+        if not account_exists(conn, key):
+            conn.execute('INSERT INTO reporting_periods(project_id,platform,account,start,registration) VALUES(?,?,?,?,1)', (*key, date.today().isoformat()))
+        conn.execute('INSERT OR IGNORE INTO platform_accounts(project_id,platform,account) VALUES(?,?,?)',
                      (project_id, *platform_identity(settings)))
     return {'saved': True}
 
 
-@app.put('/api/projects/{project_id}/account-daily')
-def save_account_day(project_id: int, report: AccountDay):
+class PlatformAccountChange(PlatformAccount):
+    new_platform: str = Field(min_length=1, max_length=40)
+    new_account: str = Field(min_length=1, max_length=100)
+
+
+def account_exists(conn, key):
+    return conn.execute('''SELECT 1 FROM platform_accounts WHERE (project_id,platform,account)=(?,?,?)
+        UNION ALL SELECT 1 FROM account_daily WHERE (project_id,platform,account)=(?,?,?) LIMIT 1''',
+        (*key, *key)).fetchone() is not None
+
+
+@app.put('/api/projects/{project_id}/platform-accounts/manage')
+def change_platform_account(project_id: int, form: PlatformAccountChange):
+    """更换本地账号标识并迁移日报。自动同步可能重新导入远端旧名。"""
+    source = (project_id, *platform_identity(form))
+    target = platform_identity(PlatformAccount(platform=form.new_platform, account=form.new_account))
     with database() as conn:
+        conn.execute('BEGIN IMMEDIATE')
         project_settings(conn, project_id)
+        if not account_exists(conn, source):
+            raise HTTPException(404, '账号不存在')
+        if source[1:] != target:
+            if account_exists(conn, (project_id, *target)):
+                raise HTTPException(409, '目标平台已有同名账号')
+            if source[1] != target[0]:
+                conn.execute('UPDATE platform_accounts SET platform_uid=NULL WHERE (project_id,platform,account)=(?,?,?)', source)
+            conn.execute('DELETE FROM reporting_aliases WHERE (project_id,platform,account)=(?,?,?) AND (destination_platform,destination_account)=(?,?)', (project_id,*target,*source[1:]))
+            if conn.execute('SELECT 1 FROM reporting_aliases WHERE (project_id,platform,account)=(?,?,?)',(project_id,*target)).fetchone():
+                raise HTTPException(409, '目标名称属于其他账号的历史标识')
+            conn.execute('UPDATE reporting_aliases SET destination_platform=?,destination_account=? WHERE (project_id,destination_platform,destination_account)=(?,?,?)', (*target,*source))
+            conn.execute('INSERT INTO reporting_aliases VALUES(?,?,?,?,?)', (*source,*target))
+            for table in ('platform_accounts', 'account_daily', 'reporting_periods'):
+                conn.execute(f'''UPDATE {table} SET platform=?, account=?
+                    WHERE project_id=? AND platform=? AND account=?''', (*target, *source))
+    return {'saved': True}
+
+
+@app.delete('/api/projects/{project_id}/platform-accounts/manage')
+def delete_platform_account(project_id: int, form: PlatformAccount, expected_reports: int | None = Query(None, ge=0)):
+    """删除本地账号及其全部日报。自动同步可能重新导入远端旧名。"""
+    key = (project_id, *platform_identity(form))
+    with database() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        project_settings(conn, project_id)
+        if not account_exists(conn, key):
+            raise HTTPException(404, '账号不存在')
+        if expected_reports is not None:
+            count = conn.execute('SELECT COUNT(*) FROM account_daily WHERE (project_id,platform,account)=(?,?,?)', key).fetchone()[0]
+            if count != expected_reports:
+                raise HTTPException(409, '确认期间历史日报数量发生变化，请重新核对后删除')
+        conn.execute('DELETE FROM reporting_aliases WHERE (project_id,destination_platform,destination_account)=(?,?,?)', key)
+        for table in ('platform_accounts', 'account_daily','reporting_periods'):
+            conn.execute(f'DELETE FROM {table} WHERE project_id=? AND platform=? AND account=?', key)
+    return {'deleted': True}
+
+
+@app.put('/api/projects/{project_id}/account-daily')
+def save_account_day(project_id: int, report: AccountDay, preview: bool = False, preview_id: str | None = None):
+    with database() as conn:
+        conn.execute('BEGIN' if preview else 'BEGIN IMMEDIATE')
+        project_settings(conn, project_id)
+        if preview or preview_id is not None:
+            row = account_day_diff(conn, project_id, report)
+            key = integrations.fingerprint([project_id, row, report.model_dump(mode='json')])
+            if preview:
+                return dict(row=row, preview_id=key)
+            if key != preview_id:
+                raise HTTPException(409, '记录已变化，请重新预览')
         write_account_day(conn, project_id, report)
     return {'saved': True}
 
 
+def account_day_diff(conn, project, report):
+    platform, account = account_reporting.resolve(conn, project, *platform_identity(report))
+    day = report.day.isoformat()
+    old = conn.execute('SELECT * FROM account_daily WHERE (project_id,platform,account,day)=(?,?,?,?)',
+                       (project, platform, account, day)).fetchone()
+    changes = {field: [old[field], getattr(report, field)] for field in ('views','published','engagements','followers')
+               if old and old[field] != getattr(report, field)}
+    return dict(platform=platform, account=account, day=day, changes=changes,
+                status='新增' if not old else '覆盖' if changes else '相同')
+
+
 def write_account_day(conn, project_id, report):
-    platform, account = platform_identity(report)
+    platform, account = account_reporting.resolve(conn, project_id, *platform_identity(report))
     conn.execute('''INSERT INTO account_daily VALUES(?,?,?,?,?,?,?,?)
             ON CONFLICT(project_id,platform,account,day) DO UPDATE SET
             followers=excluded.followers, views=excluded.views,
@@ -353,53 +520,139 @@ def write_account_day(conn, project_id, report):
              report.views, report.engagements, report.published))
 
 
+DailyCount = Annotated[int, Field(strict=True, ge=0, le=10**12)]
+
+
+class DouyinDaily(BaseModel, extra='forbid'):
+    account: str = Field(min_length=1, max_length=100)
+    platform_uid: str = Field(min_length=1, max_length=200)
+    day: str = Field(pattern=r'^\d{4}-\d{2}-\d{2}$')
+    followers: DailyCount
+    published: int = Field(strict=True, ge=0, le=10**8)
+    views: DailyCount
+    likes: DailyCount
+    comments: DailyCount
+    shares: DailyCount
+
+
+@app.post('/api/projects/{project_id}/douyin-daily')
+def save_douyin_daily(project_id: int, report: DouyinDaily):
+    account, uid = report.account.strip(), report.platform_uid.strip()
+    if not account or not uid:
+        raise HTTPException(422, '账号名称和平台 UID 不能为空')
+    try:
+        day = date.fromisoformat(report.day)
+    except ValueError as exc:
+        raise HTTPException(422, '日期无效') from exc
+    engagements = report.likes + report.comments + report.shares
+    if engagements > 10**12:
+        raise HTTPException(422, '互动总数超出范围')
+    with database() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        project_settings(conn, project_id)
+        resolved_platform, account = account_reporting.resolve(conn, project_id, '抖音', account)
+        if resolved_platform != '抖音':
+            raise HTTPException(409, '此历史名称已迁移到其他平台，请核对账号')
+        bound = conn.execute('''SELECT account FROM platform_accounts
+            WHERE project_id=? AND platform='抖音' AND platform_uid=?''', (project_id, uid)).fetchone()
+        if bound and bound['account'] != account:
+            raise HTTPException(409, '抖音 UID 已绑定其他账号名称，请核对账号')
+        if not bound:
+            history = conn.execute('''SELECT 1 FROM account_daily
+                WHERE project_id=? AND platform='抖音' AND account=? LIMIT 1''', (project_id, account)).fetchone()
+            if history:
+                raise HTTPException(409, '同名账号已有日报，无法确认归属，请核对并使用独立账号名称')
+            saved = conn.execute('''INSERT INTO platform_accounts(project_id,platform,account,platform_uid)
+                VALUES(?,'抖音',?,?) ON CONFLICT(project_id,platform,account) DO UPDATE SET
+                platform_uid=excluded.platform_uid WHERE platform_accounts.platform_uid IS NULL''',
+                (project_id, account, uid))
+            if not saved.rowcount:
+                raise HTTPException(409, '此账号已绑定其他抖音 UID')
+        write_account_day(conn, project_id, AccountDay(platform='抖音', account=account, day=day,
+            followers=report.followers, published=report.published, views=report.views, engagements=engagements))
+    return {'saved': True}
+
+
 class AccountImport(PlatformAccount):
     content: str = Field(min_length=1, max_length=250000)
 
 
 @app.post('/api/projects/{project_id}/account-import')
-def import_account_csv(project_id: int, source: AccountImport):
+def import_account_csv(project_id: int, source: AccountImport, preview: bool = False, preview_id: str | None = None):
+    from pydantic import ValidationError
     columns = {'日期':'day', '粉丝':'followers', '阅读或播放':'views', '互动':'engagements', '发布':'published'}
     reader = csv.DictReader(io.StringIO(source.content.lstrip('\ufeff')), strict=True)
     reports = {}
+    rows = []
     try:
         if reader.fieldnames is None or not set(columns).issubset(reader.fieldnames):
             raise HTTPException(422, 'CSV 表头需要包含：' + '、'.join(columns))
+        if len(set(reader.fieldnames)) != len(reader.fieldnames):
+            raise HTTPException(422, '第 1 行存在重复表头')
         for row in reader:
-            report = AccountDay(platform=source.platform, account=source.account,
+            try:
+                report = AccountDay(platform=source.platform, account=source.account,
                                 **{key:row[label] for label,key in columns.items()})
-            if report.day in reports:
-                raise HTTPException(422, f'日期重复：{report.day}')
-            reports[report.day] = report
-    except (ValueError, csv.Error) as exc:
-        raise HTTPException(422, f'第 {reader.line_num} 行日期或指标无效') from exc
-    if not reports:
+            except ValidationError as exc:
+                fields = {error['loc'][0] for error in exc.errors()}
+                error = '、'.join(label for label, key in columns.items() if key in fields) + '无效'
+            else:
+                error = '列数超出表头' if None in row else '日期重复' if report.day in reports else ''
+                if not error:
+                    reports[report.day] = report
+            rows.append(dict(line=reader.line_num, error=error))
+    except csv.Error:
+        rows.append(dict(line=reader.reader.line_num, error='CSV 引号或分隔符无效'))
+    if not rows:
         raise HTTPException(422, 'CSV 中没有日报记录')
     with database() as conn:
+        conn.execute('BEGIN' if preview else 'BEGIN IMMEDIATE')
         project_settings(conn, project_id)
+        valid = iter(reports.values())
+        for row in rows:
+            if not row['error']:
+                row.update(account_day_diff(conn, project_id, next(valid)))
+        errors = [f"第 {row['line']} 行：{row['error']}" for row in rows if row['error']]
+        key = integrations.fingerprint([project_id, source.model_dump(), rows])
+        if preview:
+            return dict(rows=rows, valid=not errors, preview_id=key)
+        if errors:
+            raise HTTPException(422, '；'.join(errors))
+        if preview_id is not None and preview_id != key:
+            raise HTTPException(409, '记录已变化，请重新预览')
         for report in reports.values():
             write_account_day(conn, project_id, report)
     return {'count':len(reports), 'latest':max(reports).isoformat()}
 
 
 @app.get('/api/projects/{project_id}/account-daily')
-def account_daily(project_id: int, day: date):
+def account_daily(project_id: int, day: date, start: date | None = None):
+    start = start or day
+    if start > day:
+        raise HTTPException(422, '开始日期不能晚于结束日期')
+    params = {'project': project_id, 'start': start.isoformat(), 'day': day.isoformat()}
     with database() as conn:
         project_settings(conn, project_id)
         rows = conn.execute('''WITH accounts AS (SELECT DISTINCT platform, account FROM
             account_daily WHERE project_id=:project AND day<=:day UNION SELECT platform,account
-            FROM platform_accounts WHERE project_id=:project)
-            SELECT a.*, d.followers, d.views, d.engagements, d.published,
+            FROM platform_accounts WHERE project_id=:project),
+            totals AS (SELECT platform, account, MAX(day) AS latest_day, SUM(views) AS views,
+                       SUM(engagements) AS engagements, SUM(published) AS published
+                       FROM account_daily WHERE project_id=:project AND day BETWEEN :start AND :day
+                       GROUP BY platform, account)
+            SELECT a.*, d.followers, t.views, t.engagements, t.published,
                    d.followers - p.followers AS growth FROM accounts a
-            LEFT JOIN account_daily d ON d.project_id=:project AND d.day=:day
+            LEFT JOIN totals t USING (platform, account)
+            LEFT JOIN account_daily d ON d.project_id=:project AND d.day=t.latest_day
                 AND d.platform=a.platform AND d.account=a.account
-            LEFT JOIN account_daily p ON p.project_id=:project AND p.day=date(:day,'-1 day')
+            LEFT JOIN account_daily p ON p.project_id=:project AND p.day=date(:start,'-1 day')
                 AND p.platform=a.platform AND p.account=a.account
-            ORDER BY a.platform, a.account''', {'project': project_id, 'day': day.isoformat()})
+            ORDER BY a.platform, a.account''', params)
         accounts = [dict(row) for row in rows]
         trend = conn.execute('''SELECT day, SUM(views) AS views, COUNT(*) AS reported
-            FROM account_daily WHERE project_id=? AND day BETWEEN date(?,'-6 days') AND ?
-            GROUP BY day ORDER BY day''', (project_id, day.isoformat(), day.isoformat()))
+            FROM account_daily WHERE project_id=:project AND day BETWEEN
+                CASE WHEN :start=:day THEN date(:day,'-6 days') ELSE :start END AND :day
+            GROUP BY day ORDER BY day''', params)
         return {'accounts': accounts, 'trend': [dict(row) for row in trend]}
 
 
@@ -437,6 +690,9 @@ def save_rules(project_id: int, rules: Rules):
         connections.notion("GET", "databases/" + rules.notion_database)
     with database() as conn:
         project_settings(conn, project_id)
+        if rules.archive_library_id is not None:
+            online_libraries._schema(conn)
+            online_libraries._load(conn, project_id, rules.archive_library_id)
         conn.execute(
             "UPDATE projects SET settings=? WHERE id=?",
             (rules.model_dump_json(), project_id),
@@ -466,19 +722,40 @@ def enqueue_snapshot(conn, run):
 
 
 def clean(materials, minimum):
-    seen = set()
-    result = []
-    for item in materials:
-        body = " ".join(item["body"].split())
-        if len(body) < minimum:
-            reason = "低于最短正文长度"
-        elif body in seen:
-            reason = "正文重复"
-        else:
-            reason = "保留"
-            seen.add(body)
-        result.append({"id": item["id"], "body": body, "reason": reason})
-    return result
+    config = minimum if isinstance(minimum, dict) else {'min_length': minimum}
+    return workflow_engine.clean(materials, config)
+
+
+class CleanDecisions(BaseModel):
+    reviewed: bool = False
+    revision: int = Field(default=0, ge=0)
+    decisions: dict[int, Literal['keep', 'exclude', 'auto']] = Field(max_length=2000)
+
+
+@app.put('/api/runs/{run_id}/cleaning')
+def update_cleaning(run_id: int, form: CleanDecisions):
+    with database() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        run = get_run(conn, run_id)
+        data = run['payload']
+        if run['stage'] != 2:
+            raise HTTPException(409, '仅可在分析前调整清洗结果；后续阶段请新建重算批次')
+        if form.revision != data.get('cleaning_revision', 0):
+            raise HTTPException(409, '清洗结果已变化，请重新打开再修改')
+        ids = {item['id'] for item in data['materials']}
+        if not set(form.decisions) <= ids:
+            raise HTTPException(422, '清洗决定包含不存在的素材编号')
+        decisions = dict(data['config'].get('manual_decisions') or {})
+        for ident, decision in form.decisions.items():
+            decisions.pop(str(ident), None)
+            decisions.pop(ident, None)
+            if decision != 'auto':
+                decisions[str(ident)] = decision
+        data['config']['manual_decisions'] = decisions
+        data['cleaned'] = clean(data['materials'], data['config'])
+        data['cleaning_revision'] = form.revision + 1
+        data['cleaning_reviewed'] = form.reviewed
+        return persist(conn, run)
 
 
 @app.post("/api/import-preview")
@@ -493,12 +770,15 @@ def preview_import(form: ImportForm):
 
 @app.middleware("http")
 async def local_writes(request: Request, call_next):
-    if request.method in ("POST", "PUT") and request.headers.get("origin") not in (
+    if request.method in ("POST", "PUT", "DELETE") and request.headers.get("origin") not in (
         None,
         str(request.base_url).rstrip("/"),
     ):
         return PlainTextResponse("跨来源写入已拒绝", status_code=403)
-    return await call_next(request)
+    response = await call_next(request)
+    if request.url.path == '/' or request.url.path.endswith(('.html', '.js', '.css')):
+        response.headers['Cache-Control'] = 'no-cache, must-revalidate'
+    return response
 
 
 @app.get("/api/projects/{project_id}/overview")
@@ -509,7 +789,17 @@ def overview(project_id: int):
         rows = conn.execute(
             """
             SELECT id, name, stage, created,
+                   json_extract(payload, '$.parent') AS parent,
+                   json_extract(payload, '$.derivation') AS derivation,
+                   json_extract(payload, '$.cleaning_reviewed') AS cleaning_reviewed,
                    json_extract(payload, '$.topic.title') AS topic,
+                   json_extract(payload, '$.config.format') AS format,
+                   CASE WHEN json_extract(payload, '$.config.format')='collection' THEN
+                       (SELECT json_group_array(DISTINCT source.id)
+                          FROM json_each(runs.payload, '$.materials') AS material
+                          JOIN runs AS source ON source.id=json_extract(material.value, '$.provenance.run_id')
+                           AND source.project_id=runs.project_id AND source.id<runs.id)
+                   END AS source_ids,
                    json_array_length(payload, '$.drafts') AS versions,
                    json_array_length(payload, '$.insights') AS insights,
                    json_array_length(payload, '$.materials') AS materials,
@@ -541,20 +831,32 @@ def overview(project_id: int):
         ).fetchall()
         batches = conn.execute("""SELECT * FROM batches WHERE project_id=?
                                ORDER BY id DESC LIMIT 8""", (project_id,)).fetchall()
+        collection_actions = conn.execute("""SELECT id,platform,mode,query,status,collector_label,
+            CASE WHEN status='browser' THEN ? ELSE last_error END AS message FROM collection_tasks
+            WHERE project_id=? AND status IN ('browser','failed') ORDER BY id DESC""",
+            (collection_tasks.PLUGIN_PENDING, project_id)).fetchall()
+        publish_failures = conn.execute("""SELECT t.id,t.account,t.platform,p.title,p.id AS post_id
+            FROM publishing_targets t JOIN publishing_posts p ON p.id=t.post_id
+            WHERE p.project_id=? AND t.status='failed' ORDER BY t.id DESC""", (project_id,)).fetchall()
         failures = conn.execute("""SELECT b.name,b.source_id,b.error FROM batches AS b
+            JOIN sources s ON s.id=b.source_id AND s.project_id=b.project_id
             WHERE b.project_id=? AND b.error IS NOT NULL AND b.source_id IS NOT NULL
             AND NOT EXISTS (SELECT 1 FROM batches AS newer WHERE newer.project_id=b.project_id
                             AND newer.source_id=b.source_id AND newer.id>b.id)""", (project_id,)).fetchall()
     counts = [0] * 5
-    for row in rows:
-        counts[row["stage"] - 1] += 1
+    runs = [dict(row) for row in rows]
+    for run in runs:
+        counts[run['stage'] - 1] += 1
+        run['source_ids'] = json.loads(run['source_ids'] or '[]')
     return {
-        "runs": [dict(row) for row in rows],
+        "runs": runs,
         "by_stage": counts,
         "sources": [dict(row) for row in sources_summary],
         "conflicts": [dict(row) for row in conflicts],
         "batches": [dict(row) for row in batches],
         "failures": [dict(row) for row in failures],
+        "collection_actions": [dict(row) for row in collection_actions],
+        "publish_failures": [dict(row) for row in publish_failures],
     }
 
 
@@ -629,29 +931,53 @@ def replay(run_id: int, rules: Rules):
         return insert_run(
             conn,
             run["name"] + " · 重算",
-            {**data["config"], **rules.model_dump(), "project_id": run["project_id"]},
+            {**{key: value for key, value in data['config'].items() if key != 'manual_decisions'},
+             **rules.model_dump(), "project_id": run["project_id"]},
             copy_materials(run),
             parent=run_id,
+            derivation='replay',
         )
 
 
+class VariantRequest(BaseModel):
+    request_key: uuid.UUID | None = None
+    source_version: int | None = Field(default=None, ge=1)
+
+
 @app.post("/api/runs/{run_id}/variant")
-def variant(run_id: int):
+def variant(run_id: int, intent: VariantRequest | None = None):
     with database() as conn:
+        conn.execute('BEGIN IMMEDIATE')
         run = get_run(conn, run_id)
         if run["stage"] != 5:
             raise HTTPException(409, "请先完成第一份稿件")
         data = run["payload"]
+        intent = intent or VariantRequest()
+        if (intent.request_key is None) != (intent.source_version is None):
+            raise HTTPException(422, '请同时提供变体请求编号和来源版本')
+        version = intent.source_version or len(data['drafts'])
+        key = str(intent.request_key) if intent.request_key else f'legacy:{version}'
+        prior = conn.execute('SELECT source_version,variant_id FROM variant_requests WHERE source_id=? AND request_key=?',
+                             (run_id, key)).fetchone()
+        if prior:
+            if prior['source_version'] != version:
+                raise HTTPException(409, '此变体请求已用于其他版本')
+            return get_run(conn, prior['variant_id'])
+        if version != len(data['drafts']):
+            raise HTTPException(409, '来源稿件已更新，请重新打开后创建变体')
         result = insert_run(
             conn,
             run["name"] + " · 衍生稿",
             {**data["config"], "project_id": run["project_id"]},
             copy_materials(run),
             parent=run_id,
+            derivation='variant', source_version=len(data['drafts']),
         )
         result["payload"].update({key: data[key] for key in
                                   ("cleaned", "insights", "topic", "recommendations", "themes") if key in data})
         result["stage"] = 4
+        conn.execute('INSERT INTO variant_requests(source_id,request_key,source_version,variant_id) VALUES(?,?,?,?)',
+                     (run_id, key, version, result['id']))
         return persist(conn, result)
 
 
@@ -663,7 +989,7 @@ def detail(run_id: int):
 
 def topic_rows(data, materials, insights, stage):
     selected = data.get("topic", {})
-    candidates = data.get("recommendations") or [
+    candidates = data["recommendations"] if "recommendations" in data else [
         {
             "key": str(ident),
             "title": materials[ident]["title"],
@@ -695,7 +1021,7 @@ def matching_sentence(body, term, fallback):
     return next((part for part in sentences if term in part.casefold()), fallback)
 
 
-def library_rows(run, kind, compact, query):
+def library_rows(run, kind, compact, query, partial_only=False):
     data = json.loads(run["payload"])
     materials = {row["id"]: row for row in data["materials"]}
     cleaned = {row["id"]: row for row in data["cleaned"]} if run["stage"] >= 2 else {}
@@ -725,6 +1051,8 @@ def library_rows(run, kind, compact, query):
 
     if kind == "materials":
         for ident, row in materials.items():
+            if partial_only and (row.get('raw') or {}).get('processing_status') != 'partial':
+                continue
             result = cleaned.get(ident, {})
             body = result.get("body", "")
             names = [origins[ident]]
@@ -738,7 +1066,16 @@ def library_rows(run, kind, compact, query):
                 created=run["created"],
             )
             if not compact:
-                item.update(original=row["body"], cleaned=body)
+                raw = row.get('raw') or {}
+                item.update(original=row["body"], cleaned=body,
+                            content_level=raw.get('content_level'), depth_status=raw.get('depth_status'),
+                            detail_error=raw.get('detail_error'), segments=raw.get('segments', []),
+                            source_url=raw.get('url') or raw.get('link'), description_text=raw.get('description_text', ''),
+                            media_part=raw.get('media_part'), media_parts=raw.get('media_parts'),
+                            image_texts=raw.get('image_texts', []), image_observations=raw.get('image_observations', []), visual_frames=raw.get('visual_frames', []),
+                            image_urls=raw.get('image_urls', []), image_assets=raw.get('image_assets', []), frame_assets=raw.get('frame_assets', []), analysis=raw.get('analysis', {}),
+                            analysis_status=raw.get('analysis_status'), evidence=raw.get('evidence', []),
+                            processing_status=raw.get('processing_status'), processing_missing=raw.get('processing_missing', []))
             yield item, names, matches(row["title"], names[0], row["body"], body)
         return
 
@@ -816,8 +1153,11 @@ def project_library(
     source: str = "",
     compact: bool = False,
     preview: bool = False,
+    partial_only: bool = False,
     since: str | None = Query(None, pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"),
     until: str | None = Query(None, pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"),
+    since_offset: int = Query(0, ge=-840, le=840),
+    until_offset: int = Query(0, ge=-840, le=840),
     run_id: int | None = Query(None, ge=1, le=2**63 - 1),
     offset: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
@@ -825,6 +1165,8 @@ def project_library(
     items, sources, statuses = [], set(), set()
     total = 0
     query = q.strip().casefold()
+    if partial_only and kind != 'materials':
+        raise HTTPException(422, '解析缺项筛选仅适用于素材库')
     if since or until:
         if kind != "materials":
             raise HTTPException(422, "日期筛选仅适用于素材库")
@@ -844,11 +1186,11 @@ def project_library(
         if kind == "materials" and preview:
             sql += f" AND {INGESTED_RUN}"
         if since:
-            sql += " AND date(created)>=?"
-            params.append(since)
+            sql += " AND datetime(created)>=datetime(?, ?)"
+            params.extend([since, f'{since_offset} minutes'])
         if until:
-            sql += " AND date(created)<=?"
-            params.append(until)
+            sql += " AND datetime(created)<datetime(?, '+1 day', ?)"
+            params.extend([until, f'{until_offset} minutes'])
         if kind == "topics":
             sql += " AND stage=3" if preview and status == "候选" else " AND stage>=3"
         if run_id is not None:
@@ -859,7 +1201,7 @@ def project_library(
         else:
             sql += " ORDER BY id DESC"
         for run in conn.execute(sql, params):
-            for item, names, matched in library_rows(run, kind, compact, query):
+            for item, names, matched in library_rows(run, kind, compact, query, partial_only):
                 if not preview:
                     sources.update(names)
                     statuses.add(item["status"])
@@ -888,9 +1230,21 @@ def evidence_text(data, topic):
     quotes = {
         item["id"]: item["quote"] for item in data["insights"] if item["id"] in ids
     }
+    semantic = {row['id']: row for row in data['insights'] if row.get('source_kind') == 'analysis'}
+    originals = {row['id']: row.get('raw') or {} for row in data['materials']}
+    for item_id, insight in semantic.items():
+        if item_id not in quotes:
+            continue
+        raw = originals.get(item_id, {})
+        evidence = {row['id']: row['text'] for row in raw.get('evidence', [])}
+        for ref in insight.get('evidence_ids', []):
+            if ref not in evidence:
+                continue
+            label = '画面观察（非作者原话）' if ref.startswith(('frame:', 'image_view:')) else '提取文字'
+            quotes[item_id] += f'\n依据 {ref} · {label}：{evidence[ref][:1000]}'
     if term:
         for item in data["cleaned"]:
-            if item["id"] not in ids:
+            if item["id"] not in ids or item['id'] in semantic:
                 continue
             body = item["body"]
             quotes[item["id"]] = matching_sentence(body, term, quotes[item["id"]])
@@ -903,6 +1257,22 @@ def evidence_text(data, topic):
 def advance(run_id: int, action: Action):
     generated = None
     owner = None
+    analysis_result = None
+    analysis_snapshot = None
+    if action.stage == 2:
+        with database() as conn:
+            snapshot = get_run(conn, run_id)
+            if snapshot['stage'] != 2:
+                raise HTTPException(409, '进度已更新，请重新打开这次运行')
+            analysis_snapshot = snapshot['payload']
+        # Model work happens outside the database transaction. Credentials only live
+        # in this call and never become part of a project, run or export snapshot.
+        execution = {**analysis_snapshot['config'],
+                     'model_base': os.getenv('DM_MODEL_BASE_URL', ''),
+                     'model_name': os.getenv('DM_MODEL_NAME', ''),
+                     'model_key': os.getenv('DM_MODEL_KEY', '')}
+        analysis_result = workflow_engine.analyze(analysis_snapshot['materials'],
+                                                  analysis_snapshot['cleaned'], execution)
     if action.stage == 4 and action.engine == "model":
         owner = uuid.uuid4().hex
         with database() as conn:
@@ -923,9 +1293,8 @@ def advance(run_id: int, action: Action):
         topic = data["topic"]
         quote = evidence_text(data, topic)
         try:
-            generated = connections.generate(
-                topic["title"], quote, action.audience, action.style
-            )
+            generated = workflow_engine.draft(topic, quote, action.audience, action.style,
+                                              {**data['config'], **action.model_dump(include={'target_words', 'writing_requirements', 'outline', 'generation_max_tokens'}, exclude_none=True), 'engine': 'model'}, connections.generate)
         except Exception:
             with database() as conn:
                 conn.execute(
@@ -947,51 +1316,20 @@ def advance(run_id: int, action: Action):
             raise HTTPException(409, "进度已更新，请重新打开这次运行")
         data = run["payload"]
         if action.stage == 1:
-            data["cleaned"] = clean(data["materials"], data["config"]["min_length"])
+            data["cleaned"] = workflow_engine.clean(data["materials"], data["config"])
         elif action.stage == 2:
-            insights = []
-            focus = data["config"]["focus"].strip().casefold()
-            for item in data["cleaned"]:
-                if item["reason"] != "保留":
-                    continue
-                passages = re.split(r"(?<=[。！？!?])|(?<=\.)\s+", item["body"])
-                matched = next(
-                    (part for part in passages if focus and focus in part.casefold()),
-                    None,
-                )
-                insights.append(
-                    {
-                        "id": item["id"],
-                        "quote": (matched or passages[0]).strip(),
-                        "matched": matched is not None,
-                    }
-                )
-            data["insights"] = sorted(insights, key=lambda item: not item["matched"])
-            dimensions = dict.fromkeys(
-                term.strip()
-                for term in re.split("[,，]", data["config"].get("topics", ""))
-                if term.strip()
-            )
-            kept = [item for item in data["cleaned"] if item["reason"] == "保留"]
-            data["themes"] = [
-                {
-                    "topic": term,
-                    "sources": [
-                        item["id"]
-                        for item in kept
-                        if term.casefold() in item["body"].casefold()
-                    ],
-                }
-                for term in dimensions
-            ]
-            data["themes"].sort(key=lambda theme: len(theme["sources"]), reverse=True)
-            data["recommendations"] = recommendations(
-                data["materials"], data["insights"], data["themes"]
-            )
+            if data != analysis_snapshot:
+                raise HTTPException(409, '分析期间素材或规则已变化，请重新打开并分析')
+            data.update(analysis_result)
+            base_candidates = recommendations(data['materials'], data['insights'], data['themes'])
+            data['recommendations'] = workflow_engine.rank_candidates(
+                data['materials'], data['insights'], data['themes'], data['config'], base_candidates)
         elif action.stage == 3:
-            candidates = recommendations(
-                data["materials"], data["insights"], data.get("themes", [])
-            )
+            candidates = data.get('recommendations')
+            if candidates is None:
+                candidates = workflow_engine.rank_candidates(data['materials'], data['insights'],
+                    data.get('themes', []), data['config'],
+                    recommendations(data['materials'], data['insights'], data.get('themes', [])))
             key = action.candidate_key or str(action.topic_id)
             candidate = next((row for row in candidates if row["key"] == key), None)
             if not candidate:
@@ -1006,13 +1344,15 @@ def advance(run_id: int, action: Action):
             if candidate.get("term"):
                 data["topic"]["term"] = candidate["term"]
         else:
+            data['config'].update(action.model_dump(include={'target_words', 'writing_requirements', 'outline', 'generation_max_tokens'}, exclude_none=True))
             topic = data["topic"]
             quote = evidence_text(data, topic)
             sources = [
                 data["materials"][item_id - 1]
                 for item_id in topic.get("ids", [topic["id"]])
             ]
-            content = generated or f"# {topic['title']}\n\n{quote}"
+            content = generated or workflow_engine.draft(topic, quote, action.audience, action.style,
+                                                          {**data['config'], 'engine': 'local'})
             data["generation"] = action.model_dump(
                 include={"style", "audience", "engine"}
             )
@@ -1055,6 +1395,7 @@ def export(run_id: int, version: int | None = Query(None, ge=1)):
 
 
 class Review(BaseModel):
+    expected_review_count: int = Field(default=0, ge=0)
     version: int = Field(ge=1)
     decision: Literal["通过", "退回"]
     note: str = Field(default="", max_length=1000)
@@ -1069,8 +1410,11 @@ def review_draft(run_id: int, form: Review):
         if not drafts or len(drafts) != form.version:
             raise HTTPException(409, "稿件版本已更新，请审阅最新版本")
         stamp = conn.execute("SELECT CURRENT_TIMESTAMP").fetchone()[0]
-        run["payload"].setdefault("reviews", []).append(
-            {**form.model_dump(), "at": stamp}
+        reviews = run["payload"].setdefault("reviews", [])
+        if sum(row.get('version') == form.version for row in reviews) != form.expected_review_count:
+            raise HTTPException(409, '该版本的审核意见已更新，请重新打开核对后再审核')
+        reviews.append(
+            {**form.model_dump(exclude={'expected_review_count'}), "at": stamp}
         )
         return persist(conn, run)
 
@@ -1124,7 +1468,7 @@ def sources(project_id: int = 1):
         return [
             dict(row)
             for row in conn.execute(
-                "SELECT id,name,kind,address,minutes,status,platform FROM sources WHERE project_id=? ORDER BY id",
+                "SELECT id,name,kind,address,minutes,status,platform,title_field,body_field,records_path,id_field,next_path,token_alias FROM sources WHERE project_id=? ORDER BY id",
                 (project_id,),
             )
         ]
@@ -1152,6 +1496,41 @@ def add_source(form: Source):
             ),
         )
         return {"id": cursor.lastrowid}
+
+
+@app.put('/api/sources/{source_id}')
+def update_source(source_id: int, form: Source):
+    with database() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        project_settings(conn, form.project_id)
+        row = conn.execute('SELECT * FROM sources WHERE id=? AND project_id=?',
+                           (source_id, form.project_id)).fetchone()
+        if not row:
+            raise HTTPException(404, '当前项目找不到这个资料来源')
+        if row['lease_until'] and row['lease_until'] > time.time():
+            raise HTTPException(409, '来源正在采集，请完成后再修改')
+        config = form.model_dump(exclude={'project_id'})
+        fields = tuple(config)
+        conn.execute('UPDATE sources SET ' + ','.join(key + '=?' for key in fields) +
+                     ",due=?,status='配置已更新，等待采集' WHERE id=? AND project_id=?",
+                     (*config.values(), time.time() + form.minutes * 60, source_id, form.project_id))
+    return {'saved': True, 'id': source_id}
+
+
+@app.delete('/api/sources/{source_id}')
+def remove_source(source_id: int, project_id: int):
+    with database() as conn:
+        conn.execute('BEGIN IMMEDIATE')
+        project_settings(conn, project_id)
+        row = conn.execute('SELECT lease_until FROM sources WHERE id=? AND project_id=?',
+                           (source_id, project_id)).fetchone()
+        if not row:
+            raise HTTPException(404, '当前项目找不到这个资料来源')
+        if row['lease_until'] and row['lease_until'] > time.time():
+            raise HTTPException(409, '来源正在采集，请完成后再移除')
+        conn.execute('DELETE FROM seen WHERE source=?', (source_id,))
+        conn.execute('DELETE FROM sources WHERE id=? AND project_id=?', (source_id, project_id))
+    return {'removed': True, 'materials_retained': True}
 
 
 class Interval(BaseModel):
@@ -1252,6 +1631,8 @@ def refresh(source_id: int):
 def schedule(stop):
     while not stop.wait(5):
         process_outbox()
+        if hasattr(app.state, 'collect_due'):
+            app.state.collect_due(stop)
         with database() as conn:
             ids = conn.execute(
                 "SELECT id FROM sources WHERE minutes>0 AND due<=? AND lease_until<=?",
@@ -1274,14 +1655,18 @@ class Destination(BaseModel):
 
 @app.get("/api/connections")
 def connection_status():
+    import importlib.util
+    import sys
     return {
         "model": os.getenv("DM_MODEL_NAME") if os.getenv("DM_MODEL_BASE_URL") else None,
         "notion": bool(os.getenv("DM_NOTION_TOKEN")),
         "transcription":bool(os.getenv('DM_ASR_BASE_URL') and os.getenv('DM_ASR_MODEL')),
         "ffmpeg":bool(shutil.which('ffmpeg')),
         "ocr_enabled":os.getenv('DM_OCR_ENABLED')=='1',
+        'image_ocr':bool(shutil.which('tesseract') or (sys.platform == 'darwin' and importlib.util.find_spec('Vision'))),
         "ocr_tools":bool(shutil.which('pdftoppm') and shutil.which('tesseract')),
-        "data_dir":str(data_directory()),
+        "storage": "local",
+        "storage_label": "工作台电脑上的本机数据库",
     }
 
 
@@ -1302,8 +1687,13 @@ def check_connection(form:ConnectionCheck):
         return {'message':'已验证数据库读取权限。写入权限以首次快照回读为准。'}
     status=connection_status()
     if form.target=='transcription':
-        if not status['transcription'] or not status['ffmpeg']:
-            raise HTTPException(422,'请配置转写服务并安装 FFmpeg')
+        missing = []
+        if not status['transcription']:
+            missing.append('配置转写服务地址和模型名称')
+        if not status['ffmpeg']:
+            missing.append('安装 FFmpeg')
+        if missing:
+            raise HTTPException(422,'请'+'，并'.join(missing))
         return {'message':'转写服务参数与 FFmpeg 已就绪。可上传短音频验证转写。'}
     if not status['ocr_enabled'] or not status['ocr_tools']:
         raise HTTPException(422,'请启用 OCR 并安装 Poppler 与 Tesseract')
@@ -1338,6 +1728,7 @@ def read_snapshot(page):
 class RestorePage(BaseModel):
     page_id: str
     project_id: int = Field(ge=1)
+    preview_id: str | None = Field(default=None, min_length=64, max_length=64)
 
 
 def validate_library_snapshot(data, material_count):
@@ -1385,10 +1776,11 @@ def validate_library_snapshot(data, material_count):
 
 
 @app.post("/api/notion/restore")
-def restore_page(form: RestorePage):
+def restore_page(form: RestorePage, preview: bool = False):
     page = connections.database_id(form.page_id)
     try:
-        saved = json.loads(read_snapshot(page))
+        snapshot = read_snapshot(page)
+        saved = json.loads(snapshot)
         data = saved["payload"]
         stage = saved["stage"]
         if saved["schema"] != 1 or type(stage) is not int or stage not in range(1, 6):
@@ -1436,6 +1828,12 @@ def restore_page(form: RestorePage):
         raise HTTPException(422, "页面缺少有效的 DM 快照或版本不兼容") from exc
     with database() as conn:
         project_settings(conn, form.project_id)
+        preview_id = integrations.fingerprint([form.project_id, page, snapshot])
+        if preview:
+            return {'preview_id': preview_id, 'page': page, 'project_id': form.project_id,
+                    'name': str(saved.get('name', '恢复运行')), 'version': len(data.get('drafts', []))}
+        if form.preview_id is not None and form.preview_id != preview_id:
+            raise HTTPException(409, '目标或远端快照已变化，请重新预览')
         data["config"] = {
             **config,
             **rules,
@@ -1610,7 +2008,30 @@ def receipts(run_id: int):
         ]
 
 
+draft_archive.mount(app, database, get_run, project_settings)
+service_credentials.mount(app, ROOT)
+online_libraries.mount(app, database, project_settings, insert_run)
+processing_settings.mount(app, ROOT)
 integrations.mount(app, database, project_settings, AccountDay, write_account_day, get_run)
+account_reporting.mount(app, database, project_settings, account_exists)
 mount_collection(app, database, insert_run, project_settings)
+collection_tasks.mount(app, database, insert_run, project_settings, clean, persist)
 mount_references(app, database, project_settings, topic_rows)
+publishing.mount_publishing(app, database, project_settings)
+
+
+@app.get('/api/publishing/extension.zip')
+def publishing_extension():
+    folder = ROOT / 'tools' / 'publish-extension'
+    if not (folder / 'manifest.json').is_file():
+        raise HTTPException(404, '找不到发布助手扩展')
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as package:
+        for path in sorted(folder.iterdir()):
+            if (path.is_file() and not path.is_symlink() and path.suffix in {'.html', '.json', '.css', '.js', '.mjs'}
+                    and not re.search(r'(^|[._-])(readme|tests?|spec)([._-]|$)', path.name, re.I)):
+                package.write(path, path.name)
+    return Response(archive.getvalue(), media_type='application/zip', headers={
+        'Content-Disposition': 'attachment; filename="dm-publish-extension.zip"'})
+
 app.mount("/", StaticFiles(directory=ROOT / "web", html=True), name="dashboard")

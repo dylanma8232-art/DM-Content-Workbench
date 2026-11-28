@@ -1,0 +1,167 @@
+/* Load after chestnut-theme.css. Native controls remain usable without this JS. */
+.dm-select {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  font: inherit;
+}
+.dm-select[hidden], .dm-select__list [hidden] { display: none !important; }
+/* Intentionally nonzero and rendered for native form APIs and select_option(). */
+.dm-select > select.dm-select__native {
+  position: absolute !important;
+  inset: 0 auto auto 0 !important;
+  display: block !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-width: 1px !important;
+  max-width: 1px !important;
+  min-height: 1px !important;
+  max-height: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+.dm-select > .dm-select__button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong, #c9bfb2);
+  border-radius: var(--r-ctrl, 9px);
+  background: var(--card, #fff);
+  color: var(--t1, #292723);
+  box-shadow: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: start;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.dm-select > .dm-select__button:hover {
+  border-color: var(--accent, #c8521b);
+  background: var(--subtle, #f3efe8);
+  color: var(--t1, #292723);
+}
+.dm-select > .dm-select__button[aria-expanded="true"] {
+  border-color: var(--accent, #c8521b);
+  background: var(--accent-bg, #fff0e5);
+  color: var(--accent-ink, #913b16);
+}
+.dm-select > .dm-select__button:focus-visible {
+  outline: 2px solid var(--accent, #c8521b);
+  outline-offset: 3px;
+}
+.dm-select > .dm-select__button[aria-invalid="true"] { border-color: var(--crit, #ac352b); }
+.dm-select__value { min-width: 0; overflow-wrap: anywhere; white-space: normal; }
+.dm-select__chevron, .dm-select__check {
+  display: block;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.dm-select__chevron { color: var(--t3, #6f665c); }
+[aria-expanded="true"] > .dm-select__chevron { transform: rotate(180deg); color: var(--accent-ink, #913b16); }
+.dm-select__list {
+  position: fixed;
+  inset: auto;
+  z-index: 10000;
+  box-sizing: border-box;
+  max-width: calc(100vw - 16px);
+  margin: 0;
+  padding: 5px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line, #e6dfd5);
+  border-radius: var(--r-ctrl, 9px);
+  background: var(--card, #fff);
+  color: var(--t1, #292723);
+  box-shadow: var(--chestnut-popover-shadow, 0 12px 32px rgb(66 44 24 / 14%));
+  font: 14px/1.5 var(--sans, system-ui, sans-serif);
+  text-align: start;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong, #c9bfb2) var(--subtle, #f3efe8);
+}
+.dm-select__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-sizing: border-box;
+  min-height: 44px;
+  padding: 10px 11px;
+  border-radius: 5px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.dm-select__option > span { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.dm-select__option.is-active { background: var(--subtle, #f3efe8); outline: 1px solid var(--line-strong, #c9bfb2); outline-offset: -1px; }
+.dm-select__option[aria-selected="true"] { background: var(--accent-bg, #fff0e5); color: var(--accent-ink, #913b16); font-weight: 600; }
+.dm-select__check { visibility: hidden; }
+.dm-select__option[aria-selected="true"] > .dm-select__check { visibility: visible; }
+/* The project switcher and its existing action read as one aligned control. */
+.projectPill:has(.dm-select) {
+  gap: 4px;
+  min-width: 0;
+  padding: 3px;
+  border-color: var(--line, #e6dfd5);
+  border-radius: var(--r-ctrl, 9px);
+  background: var(--card, #fff);
+}
+.projectPill > .dm-select { flex: 1 1 0; width: 0; }
+.projectPill .dm-select__button { padding: 8px; border-color: transparent; background: transparent; }
+.projectPill .dm-select__button:hover { background: var(--subtle, #f3efe8); }
+.projectPill:has(.dm-select) > .projAddBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 44px;
+  min-height: 44px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--accent-line, #e9bea2);
+  border-radius: 6px;
+  background: var(--accent-bg, #fff0e5);
+  color: var(--accent-ink, #913b16);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+  box-shadow: none;
+}
+.projectPill > .projAddBtn:hover { border-color: var(--accent, #c8521b); background: var(--subtle-hover, #ebe5db); color: var(--accent-ink, #913b16); }
+.cleaningChoice > .dm-select { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
+@media (max-width: 1179px) {
+  .projectPill > .dm-select { flex-basis: 112px; width: 112px; }
+}
+@media (max-width: 700px) {
+  .cleaningChoice > .dm-select { grid-column: 1; grid-row: auto; }
+}
+@media (max-width: 480px) {
+  .projectPill:has(.dm-select) { max-width: 100%; }
+  .projectPill > .dm-select { flex-basis: 80px; width: 80px; }
+  .projectPill .dm-select__button { gap: 6px; padding: 8px 6px; font-size: 13px; }
+  .projectPill > .projAddBtn { padding-inline: 8px; }
+}
+@media (forced-colors: active) {
+  .dm-select__option[aria-selected="true"] { outline: 1px solid Highlight; outline-offset: -2px; }
+}

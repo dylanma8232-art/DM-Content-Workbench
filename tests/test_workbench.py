@@ -1,4 +1,5 @@
 import os
+import json
 import tempfile
 import unittest
 from contextlib import closing
@@ -51,7 +52,10 @@ class WorkbenchTests(WorkbenchFixture):
         run_id = self.create()
         new_dir = Path(self.folder.name) / 'new'
         self.client.put('/api/storage', json={'directory':str(new_dir)}).raise_for_status()
-        self.assertEqual(self.client.get('/api/connections').json()['data_dir'], str(new_dir.resolve()))
+        settings = self.client.get('/api/connections').json()
+        self.assertEqual(settings['storage'], 'local')
+        self.assertNotIn('data_dir', settings)
+        self.assertNotIn(str(new_dir.resolve()), json.dumps(settings))
         self.assertEqual(self.client.get(f'/api/runs/{run_id}').json()['name'], '阅读')
         self.assertEqual(self.client.put('/api/storage', json={'directory':self.folder.name}).status_code, 409)
         self.assertEqual(app.data_directory(), new_dir.resolve())
@@ -65,6 +69,24 @@ class WorkbenchTests(WorkbenchFixture):
             app.initialize(conn)
         self.assertTrue(self.client.get('/api/setup').json()['complete'])
         self.assertEqual(self.client.get(f'/api/runs/{run}').json()['name'],'阅读')
+
+    def test_failed_migration_verification_preserves_active_database(self):
+        run = self.create()
+        target = Path(self.folder.name) / 'destination'
+        with patch('backup.verify_database', side_effect=ValueError('模拟校验失败')):
+            failed = self.client.put('/api/storage', json={'directory':str(target)})
+        self.assertEqual(failed.status_code,422)
+        self.assertFalse((target / 'workbench.sqlite3').exists())
+        self.assertEqual(app.data_directory(),Path(self.folder.name).resolve())
+        self.assertEqual(self.client.get(f'/api/runs/{run}').json()['name'],'阅读')
+
+    def test_ocr_and_speech_have_independent_readiness(self):
+        with patch.dict(os.environ,{'DM_OCR_ENABLED':'1','DM_ASR_BASE_URL':'','DM_ASR_MODEL':''}), patch('app.shutil.which',return_value='fixture-tool'):
+            self.client.post('/api/connections/check',json={'target':'ocr'}).raise_for_status()
+            speech = self.client.post('/api/connections/check',json={'target':'transcription'})
+            self.assertEqual(speech.status_code,422)
+            self.assertIn('转写',speech.json()['detail'])
+            self.assertNotIn('FFmpeg',speech.json()['detail'])
 
     def test_connection_check_reports_actual_scope(self):
         with patch('connections.check_model') as model:

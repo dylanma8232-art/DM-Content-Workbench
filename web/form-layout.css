@@ -1,0 +1,228 @@
+/* Shared form layout. Load LAST, after chestnut-theme.css and component-polish.css.
+   Only field containers are arranged here; popup geometry belongs to each component. */
+.stageMain {
+  --form-control-height: 44px;
+  --form-field-gap: 8px;
+  --form-row-gap: 20px;
+}
+
+/* Target actual text fields, never every label (choices and batch toggles are inline). */
+.stageMain label:has(> :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]), textarea, select, .dmSelect, .dm-select, .dm-date-field)) {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--form-field-gap);
+  min-width: 0;
+  max-width: 100%;
+  margin: 0 0 var(--form-row-gap);
+  color: var(--t1);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.stageMain :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]), select:not(.dm-select__native), textarea) {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  border-radius: 9px;
+  font-family: var(--sans, system-ui, sans-serif);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.stageMain :is(input:not([type=checkbox]):not([type=radio]):not([type=hidden]), select:not(.dm-select__native)) {
+  height: var(--form-control-height);
+  min-height: var(--form-control-height);
+  padding: var(--field-padding, 10px 12px);
+}
+.stageMain textarea { min-height: 132px; padding: 12px; resize: vertical; }
+.stageMain :is(.dmSelect, .dm-select) { width: 100%; min-width: 0; margin: 0; }
+.stageMain :is(.dmSelect, .dm-select) > .dm-select__button {
+  height: var(--form-control-height);
+  min-height: var(--form-control-height);
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.stageMain .dm-select__value { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.stageMain .dm-date-field { display: flex; width: 100%; min-width: 0; gap: 8px; margin: 0; }
+.stageMain .dm-date-field > input.dm-date-input { width: 0; flex: 1 1 0; height: 44px; min-height: 44px; margin: 0; }
+.stageMain .dm-date-field > button.dm-date-trigger {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  margin: 0;
+  border-radius: 9px;
+}
+.stageMain input[type=file] { --field-padding: 3px; overflow: hidden; color: var(--t2); }
+.stageMain input[type=file]::file-selector-button { box-sizing: border-box; height: 36px; min-height: 36px; padding: 6px 12px; font: inherit; }
+
+/* Repeated rows share two equal columns and one spacing rhythm. Hidden rows stay hidden. */
+.stageMain .pair:not([hidden]), #reportForm .pair:not([hidden]) {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: var(--form-row-gap) 24px;
+  margin: 0 0 var(--form-row-gap);
+}
+.stageMain .pair > * { min-width: 0; }
+.stageMain .pair > label:has(*), .stageMain .pair > .pair { margin-bottom: 0; }
+.stageMain .pair.nestedPair { gap: 16px; }
+.stageMain .pair > label:has(> :is(input, select, .dmSelect, .dm-select, .dm-date-field)):not(:has(textarea, input[type=checkbox], input[type=radio])) {
+  align-self: stretch;
+  justify-content: space-between;
+}
+.stageMain :is(.fieldHelp, .configHelp) { margin: 8px 0 20px; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
+.stageMain :is(.fieldHelp, .configHelp):first-child { margin-top: 0; }
+.stageMain label + :is(.fieldHelp,.configHelp) {margin-top:-12px;}
+#taskReadiness {display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;max-width:none;margin:16px 0;}
+.stageMain :is(.cardHint, .cardHintInline) { margin-bottom: 20px; }
+.stageMain :is(.formActions, .stageActionBar, .sourceControls, .headActions) {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-width: 0;
+}
+.stageMain :is(.formActions, .stageActionBar, .sourceControls, .headActions) > label { margin-bottom: 0; }
+.stageMain :is(.formActions, .stageActionBar, .headActions) > button {
+  min-height: 44px;
+  max-width: 100%;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 9px;
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.stageMain .formActions { margin-top: 24px; }
+.stageMain :is(.pageHead, .ph):has(> :is(.headActions, label)) { align-items: flex-end; }
+.stageMain .pageHead > * { min-width: 0; }
+/* A dedicated tools row prevents date captions from enlarging the page title row. */
+#overview > .pageHead { display: flex; flex-wrap: wrap; gap: 20px; }
+#overview > .pageHead > :first-child { flex: 1 1 240px; }
+#overview .headActions { flex: 1 1 100%; align-items: flex-end; justify-content: flex-start; gap: 12px; }
+#overview .headActions > label:has(.dm-date-field), #overview .headActions > label:has(> input[type=date]) {
+  flex: 0 1 208px;
+  gap: 8px;
+  margin: 0;
+  color: var(--t2);
+  font-size: 13px;
+}
+#overview .headActions > #addReport { margin-inline-start: auto; }
+.dailyQueue .ph > label { width: min(100%, 220px); margin-bottom: 0; }
+
+/* Comfortable reading width with no extra nested surfaces. */
+#settings :is(form, .processingConnection), #onlineLibraryForm, #source { width: 100%; max-width: 900px; min-width: 0; }
+#settings :is(form, .processingConnection) { box-sizing: border-box; }
+#settings form.narrowCard { margin-inline: 0; }
+#settings form :is(.checkBox, .sourceFormBox) { border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+#rules fieldset.stageSettings { align-items: start; gap: 24px; }
+#rules .workflowField { display: flex; flex-direction: column; align-items: stretch; gap: 8px; min-width: 0; }
+#rules .workflowField > label { margin: 0; }
+#rules .workflowField > .configHelp { margin: 0; }
+#rules fieldset > details:not([hidden]) { padding-block: 8px; }
+#rules fieldset > details[open] > summary { margin-bottom: 16px; }
+#rules fieldset > p.configHelp { margin: 0; }
+#rules .formActions { align-items: flex-end; }
+
+#collectionTaskForm { gap: 20px 24px; align-items: end; }
+#collectionTaskForm > label { margin-bottom: 0; }
+#collectionTaskForm > button { min-height: 44px; margin: 0; align-self: end; }
+#collectionTaskForm > :is(.platformField, .choiceField) { margin: 0; }
+/* Source tabs share a baseline with the content panel below. */
+.sourceWorkspaceTabs, .source-workspaceTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  margin: 0 0 24px;
+  padding: 0;
+  border-bottom: 1px solid var(--line);
+}
+:is(.sourceWorkspaceTabs, .source-workspaceTabs) > button {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 16px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-size: 14px;
+  white-space: normal;
+}
+:is(.sourceWorkspaceTabs, .source-workspaceTabs) > [aria-selected=true] { background: transparent; border-color: var(--accent); color: var(--accent-ink); }
+
+/* A disclosure within a work surface is a row, with the chevron on its trailing edge. */
+.workCard > details.operatorDetails {
+  border-block: 1px solid var(--line);
+  border-inline: 0;
+  border-radius: 0;
+  padding-inline: 0;
+  background: transparent;
+}
+.workCard > details.operatorDetails > summary {
+  position: relative;
+  padding-inline: 0 28px;
+}
+.workCard > details.operatorDetails > summary::before {
+  position: absolute;
+  inset-inline-end: 4px;
+  top: calc(50% - 7px);
+  margin: 0;
+  color: var(--t3);
+}
+.stageMain button[type=submit]:not([class]),
+.stageMain button[type=submit][class=""] {
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
+  color: white;
+}
+.stageMain button[type=submit]:not([class]):hover:not(:disabled),
+.stageMain button[type=submit][class=""]:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+/* Choices retain their horizontal mark + caption and their full clickable label. */
+.stageMain label:has(> input:is([type=checkbox], [type=radio])) {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.stageMain label > input:is([type=checkbox], [type=radio]) { flex: 0 0 18px; width: 18px; height: 18px; min-height: 18px; margin: 0; }
+.stageMain .segmentedChoice label { flex-direction: row; margin: 0; }
+.stageMain :is(input, textarea, select)[aria-invalid=true], .stageMain .dm-select__button[aria-invalid=true],
+.stageMain .dm-select:has(> select[aria-invalid=true]) > .dm-select__button { border-color: var(--crit) !important; background-color: var(--crit-bg); }
+.stageMain :is(.fieldError, .field-error, [data-field-error]) { margin: 8px 0 16px; color: var(--crit); font-size: 13px; line-height: 1.7; }
+
+@media (max-width: 700px) {
+  .stageMain .pair:not([hidden]), #reportForm .pair:not([hidden]), #rules fieldset.stageSettings:not([hidden]),
+  #collectionTaskForm:not([hidden]) { grid-template-columns: minmax(0, 1fr); }
+  #collectionTaskForm > * { grid-column: 1; }
+  #collectionTaskForm > button { justify-self: start; }
+  #overview .headActions > #addReport { margin-inline-start: 0; }
+  #overview .headActions > label { flex-basis: 100%; }
+  .stageMain :is(.headActions, .sourceControls) > label { flex: 1 1 100%; }
+  .stageMain .pageHead { flex-wrap: wrap; }
+  .stageMain .pageHead > .headActions { width: 100%; }
+}
+@media (max-width: 480px) {
+  .stageMain .pair:not([hidden]) { gap: 20px; }
+  .stageMain :is(.formActions, .headActions) > button { flex: 1 1 140px; }
+  #overview .headActions > label:has(.dm-date-field), #overview .headActions > label:has(> input[type=date]) { flex-basis: 100%; }
+  :is(.sourceWorkspaceTabs,.source-workspaceTabs) {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;}
+  :is(.sourceWorkspaceTabs, .source-workspaceTabs) > button {padding:10px 4px;text-align:center;font-size:12px;}
+}
+/* Preserve native visibility even for dynamically toggled labels and grid groups. */
+.stageMain [hidden] { display: none !important; }

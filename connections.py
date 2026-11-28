@@ -67,7 +67,12 @@ def public_endpoint(url):
             for host in os.getenv("DM_RSS_TRUSTED_HOSTS", "").split(",")
             if host.strip()
         }
-        if parsed.hostname.lower() not in trusted and (
+        proxy_suffixes = {host.strip().lower() for host in os.getenv('DM_PUBLIC_PROXY_SUFFIXES', '').split(',') if host.strip()}
+        proxy_host = any(parsed.hostname.lower() == host or parsed.hostname.lower().endswith('.' + host) for host in proxy_suffixes)
+        fake_network = ipaddress.ip_network('198.18.0.0/15')
+        proxy_address = bool(addresses) and proxy_host and (parsed.port or 443) == 443 and all(
+            ipaddress.ip_address(entry[4][0]) in fake_network for entry in addresses)
+        if parsed.hostname.lower() not in trusted and not proxy_address and (
             not addresses
             or any(
                 not ipaddress.ip_address(entry[4][0]).is_global for entry in addresses

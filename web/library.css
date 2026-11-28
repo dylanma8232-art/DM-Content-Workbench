@@ -349,6 +349,26 @@
   cursor: pointer;
 }
 
+#library .lib-markdown {
+  max-width: 74ch;
+  white-space: normal;
+  line-height: 1.8;
+  color: var(--t1);
+}
+
+#library .lib-markdown :is(p, li, blockquote, pre) {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+#library .lib-markdown :is(p, ul, ol, pre) { margin: .65em 0; }
+#library .lib-markdown :is(ul, ol) { padding-inline-start: 1.8em; }
+#library .lib-markdown h3 { font-size: 1.2em; }
+#library .lib-markdown pre { padding: 12px; background: var(--subtle); }
+#library .lib-layout:has(.lib-empty-detail) { min-height: 0; }
+#library .lib-master:has(.lib-empty-detail) { grid-column: 1 / -1; border: 0; }
+#library .lib-layout:has(.lib-empty-detail) :is(.lib-detail, .lib-pager) { display: none; }
+
 #library .lib-empty-detail {
   padding: 26px 20px;
   border-radius: 12px;
@@ -357,7 +377,16 @@
 }
 
 #library .lib-back {
-  display: none;
+  display: inline-flex;
+}
+
+#library .lib-review { flex-basis: 100%; overflow-wrap: anywhere; }
+#library .lib-review li { padding-block: .25em; }
+#library .lib-review li button { margin-inline-start: .6em; }
+#library .lib-evidence img { max-width: 100%; height: auto; }
+#library .lib-applied:not(:empty) {
+  display: block;
+  margin-block: .5em;
 }
 
 @media (max-width: 860px) {

@@ -1,0 +1,56 @@
+.publishLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  max-width: 920px;
+  align-items: start;
+  gap: 16px;
+}
+
+#publishing fieldset {
+  min-width: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+
+.publishLayout .workCard, .publishAccount > label { min-width: 0; }
+.publishLayout :is(input, select, textarea) { min-width: 0; max-width: 100%; }
+.publishAccount {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto;
+  align-items: end;
+  gap: 8px;
+  margin-block: 12px;
+}
+
+.publishAccount > fieldset { grid-column: 1 / -1; }
+.publishAccount .publishPlatforms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.publishAccount label { margin: 0; }
+.publishAccount > label { grid-column: 1 / -2; }
+@media (max-width: 440px) { .publishAccount > label { grid-column: 1 / -1; } }
+.publishPost, .publishTarget {
+  border-top: 1px solid var(--line-strong);
+  padding-block: 14px;
+  overflow-wrap: anywhere;
+}
+.publishPost h3 { margin: 0 0 10px; }
+.publishPost .formActions { flex-wrap: wrap; margin: 10px 0; }
+.publishPost .download { max-width: 100%; white-space: normal; }
+.publishTarget .ph { flex-wrap: wrap; gap: 4px 12px; }
+.publishTarget form, .publishAssistant { margin-top: 12px; }
+.publishBody { white-space: pre-wrap; max-height: 18rem; overflow: auto; }
+.publishWithExtension, .publishBatch, html[data-dm-publish-extension="1"] .publishWithoutExtension { display: none; }
+html[data-dm-publish-extension="1"] .publishBatch { display: grid; gap: 6px; justify-items: start; }
+#publishing .publishBatch { margin-block: 14px; }
+.publishBatch legend { font-weight: 600; margin-bottom: 4px; }
+.publishBatch label { display: flex; align-items: center; gap: 8px; margin: 0; }
+.publishBatch input[type="checkbox"] { width: 16px; height: 16px; flex: none; }
+html[data-dm-publish-extension="1"] .publishWithExtension { display: inline-flex; }
+
+#publishing [hidden] { display: none; }
+#publishing .pageHead, #publishForm .ph { flex-wrap: wrap; gap: 8px; }
+@media (max-width: 440px) {
+  .publishAccount { grid-template-columns: minmax(0, 1fr); }
+  .publishAccount button { justify-self: end; }
+  .segNav { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}

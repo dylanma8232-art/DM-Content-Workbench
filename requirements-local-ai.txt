@@ -1,0 +1,8 @@
+# Optional local AI services for Apple Silicon; separate from the workbench environment.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+httpx>=0.27,<0.29
+python-multipart>=0.0.22,<1
+python-dotenv>=1,<2
+mlx-vlm>=0.4,<1
+mlx-whisper>=0.4,<1

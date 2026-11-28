@@ -1,0 +1,78 @@
+/* Account reporting surface */
+#overview > .pageHead { align-items: end; padding-bottom: 18px; }
+#overview .headActions { flex: 0 1 auto; justify-content: flex-end; }
+#overview .headActions label:has(.dm-date-range) { flex: 1 1 auto; }
+#overview .dm-date-range { width: 100%; }
+#overview #accountMetrics {
+  background: var(--accent-ink);
+  color: var(--card);
+  gap: 0;
+  margin: 0 0 26px;
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+#accountMetrics > section {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: clamp(16px, 2vw, 28px);
+}
+#accountMetrics > section + section { border-inline-start: 1px solid color-mix(in srgb, var(--card) 27%, transparent); }
+#overview #accountMetrics h2, #overview #accountMetrics small { color: var(--accent-bg); }
+#overview #accountMetrics strong { color: inherit; font-size: clamp(28px, 3.15vw, 50px); line-height: 1.14; margin: 9px 0 0; font-variant-numeric: tabular-nums; }
+#overview #accountMetrics small { display: block; margin-top: 6px; }
+#accountPlatforms { margin: 0 0 20px; }
+#accountPlatforms > .ph h2 { font-size: 21px; }
+#homeIntroText { color: var(--t2); margin-top: 3px; font-size: 13px; }
+#homeIntroText:empty, #accountRows:empty { display: none; }
+#overview #accountRows { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; margin-top: 12px; }
+#overview #accountRows:empty { display: none; }
+#accountRows .platformCard { display: block; background: var(--card); border: 1px solid var(--line); border-radius: 0; padding: 0; box-shadow: none; }
+#accountRows .platformCard + .platformCard { border-top: 0; }
+#accountRows .platformCard:first-of-type { border-start-start-radius: 14px; border-start-end-radius: 14px; }
+#accountRows .platformCard:last-of-type { border-end-start-radius: 14px; border-end-end-radius: 14px; }
+.platformSummary { display: grid; grid-template-columns: minmax(120px, 1.6fr) minmax(70px, .7fr) minmax(0, 4fr) 16px; gap: 16px; align-items: center; padding: 16px 20px; border-radius: inherit; }
+.platformSummary:hover, .platformCard[open] > .platformSummary { background: var(--subtle); }
+.platformSummary::before { order: 4; margin: 0; color: var(--t2); }
+.platformIdentity { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.platformIdentity img { width: 36px; height: 36px; flex: none; }
+.platformIdentity > span { min-width: 0; }
+.platformIdentity b, .platformIdentity small { display: block; }
+.platformIdentity b { font-size: 16px; }
+.platformIdentity small { font-weight: 400; }
+.platformStatus { justify-self: start; padding: 2px 8px; background: var(--subtle); border-radius: 6px; font-weight: 500; }
+#accountRows .platformStatus[data-state=reported] { color: var(--good); background: var(--good-bg); }
+.platformNumbers { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.platformNumbers small, .platformNumbers b { display: block; }
+.platformNumbers small { font-size: 12px; font-weight: 400; }
+.platformNumbers b { font-size: clamp(16px, 1.4vw, 22px); font-variant-numeric: tabular-nums; }
+.accountRoster { padding: 0 20px; }
+.accountRoster .accountEntry { padding: 10px 0; border-top: 1px solid var(--line); }
+.accountRoster .accountRowActions { width: auto; margin-inline-start: auto; }
+#accountEmpty { display: flex; align-items: center; justify-content: center; gap: 24px; min-height: 204px; padding: 22px; margin-top: 12px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card); }
+#accountEmpty[hidden] { display: none; }
+#accountEmpty img { object-fit: contain; }
+#accountEmpty h3 { font-size: 19px; }
+#accountEmpty p { margin: 5px 0 14px; color: var(--t2); }
+#accountConnections { margin: 16px 0; border-block: 1px solid var(--line); }
+#accountConnections > summary { display: flex; align-items: center; gap: 10px; justify-content: space-between; padding: 12px 2px; font-weight: 600; }
+#accountConnections > summary::before { order: 1; margin: 0; }
+#reachPanel { margin: 16px 0; }
+#reachTrend i { background: var(--accent); }
+@media (max-width: 700px) {
+  #overview > .pageHead { gap: 10px; }
+  #overview > .pageHead > .headActions { flex: 1 1 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+  #overview #accountMetrics { margin-bottom: 18px; }
+  #accountMetrics > section:nth-child(3) { border-inline-start: 0; }
+  #accountMetrics > section:nth-child(n+3) { border-top: 1px solid color-mix(in srgb, var(--card) 27%, transparent); }
+  .platformSummary { grid-template-columns: minmax(0, 1fr) auto 14px; gap: 10px; padding: 12px 14px; }
+  .platformSummary::before { grid-column: 3; grid-row: 1; }
+  .platformNumbers { grid-column: 1 / -1; gap: 4px; }
+  .accountRoster { padding-inline: 14px; }
+  .accountRoster .accountRowActions { width: 100%; }
+  #accountEmpty { gap: 12px; padding: 20px 14px; }
+  #accountEmpty img { width: 44px; height: 84px; }
+  #accountEmpty .formActions { gap: 6px; }
+}

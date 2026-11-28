@@ -3,12 +3,24 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#f5f6f8">
+  <meta name="theme-color" content="#f4f6f8">
   <title>DM 内容工作台</title>
-  <link rel="stylesheet" href="/style.css">
-  <link rel="stylesheet" href="/overview.css">
-  <link rel="stylesheet" href="/workspace.css">
-  <link rel="stylesheet" href="/library.css">
+  <link rel="stylesheet" href="/style.css?v=20261127-ui2">
+  <link rel="stylesheet" href="/overview.css?v=20261127-ui5">
+  <link rel="stylesheet" href="/workspace.css?v=20261127-ui2">
+  <link rel="stylesheet" href="/library.css?v=20261128-r1">
+  <link rel="stylesheet" href="/collection-tasks.css?v=20261127-import2">
+  <link rel="stylesheet" href="/publishing.css?v=20261127-ui3">
+  <link rel="stylesheet" href="/operator-settings.css?v=20261127-ui4">
+  <link rel="stylesheet" href="/chestnut-theme.css?v=20261127-ui5">
+  <link rel="stylesheet" href="/date-picker.css?v=20261127-ui6">
+  <link rel="stylesheet" href="/select-control.css?v=20261127-ui6">
+  <link rel="stylesheet" href="/component-polish.css?v=20261127-ux1">
+  <link rel="stylesheet" href="/flow-navigation.css?v=20261127-ux1">
+  <link rel="stylesheet" href="/form-layout.css?v=20261127-ux1">
+  <link rel="stylesheet" href="/account-overview.css?v=1">
+  <link rel="stylesheet" href="/workbench-next.css?v=20261128-r1">
+  <link rel="icon" type="image/webp" href="/brand/chestnut-avatar.webp">
 </head>
 <body>
   <div class="bgWash" aria-hidden="true"></div>
@@ -17,10 +29,8 @@
     <div class="topBarInner">
       <div class="brandCluster">
         <button type="button" id="brandHome" aria-label="工作台首页" class="brand" title="回到工作台首页">
-          <span class="mark" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><path d="M8 9h8M8 12.5h8M8 16h5"/></svg>
-          </span>
-          <strong class="brandName">DM 工作台</strong>
+          <span class="mark" aria-hidden="true"><img src="/brand/chestnut-avatar.webp" alt="" width="44" height="44"></span>
+          <span class="brandText"><strong class="brandName">DM 内容工作台</strong><small class="brandTag">栗子陪你，把素材写成作品</small></span>
         </button>
 
         <div class="projectPill">
@@ -29,14 +39,15 @@
         </div>
       </div>
 
-      <nav class="segNav" aria-label="工作区导航">
+      <nav class="segNav" aria-label="工作区导航" id="workspaceNavigation">
+        <button type="button" id="mobileNavToggle" class="mobileNavToggle" aria-expanded="false" aria-controls="workspaceNavigation">全部栏目</button>
         <button type="button" id="home" aria-current="page">账号总览</button>
-        <button id="workNav">每日工作流</button>
-        <button id="channelNav">采集渠道</button>
-        <button type="button" id="newRun">采集导入</button>
+        <button id="workNav">内容工作流</button>
+        <button type="button" id="channelNav">采集管理</button>
         <button type="button" id="materialsNav">素材库<small id="navMaterialsCount" class="navCount"></small></button>
         <button type="button" id="topicsNav">选题库<small id="navTopicsCount" class="navCount"></small></button>
         <button type="button" id="draftsNav">成稿库<small id="navDraftsCount" class="navCount"></small></button>
+        <button type="button" id="publishingNav">发布台</button>
         <button type="button" id="projectSettings">配置</button>
       </nav>
 
@@ -53,11 +64,11 @@
         </details>
 
         <div class="lights">
-          <button type="button" id="sourceLightBtn" class="light" title="管理在线自动采集源">采集渠道</button>
+          <button type="button" id="sourceLightBtn" class="light" title="管理在线自动采集源">采集管理</button>
           <button type="button" id="headerStorageBtn" class="light ok" title="查看 AI 大模型、ASR、OCR 与 SQLite 状态">本地引擎</button>
         </div>
 
-        <button type="button" id="heroImportBtn" class="primary topCta">+ 导入素材</button>
+        <button type="button" id="heroImportBtn" class="primary topCta" title="上传文稿、PDF 等内容到素材库">导入写作素材</button>
       </div>
     </div>
   </header>
@@ -69,8 +80,8 @@
     <section id="welcome" hidden>
       <div class="pageHead">
         <div>
-          <h1>初始化内容工作台</h1>
-          <p>数据默认存储在当前设备的 SQLite 中，无需配置外部账号即可跑通「采集 → 清洗 → 分析 → 选题 → 成稿」。</p>
+          <h1>开始你的内容项目</h1>
+          <p>给项目起个名字，就可以导入第一份素材。资料库、AI 服务和采集任务都可以稍后设置。</p>
         </div>
         <div class="headActions">
           <button type="button" id="skipWelcome" class="ghost">返回总览</button>
@@ -78,10 +89,10 @@
       </div>
 
       <form id="welcomeForm" class="workCard narrowCard">
-        <h2>设定首个项目默认值</h2>
-        <p class="cardHint">不同项目的素材、采集源、清洗规则与稿件完全隔离，后续随时可在「配置」中调整。</p>
+        <h2>这个项目做什么内容？</h2>
+        <p class="cardHint">按栏目、客户或专题建立项目，分别管理素材和稿件。下面的设置以后都能调整。</p>
         <label>项目名称
-          <input name="name" value="我的内容项目" maxlength="100" required>
+          <input name="name" value="我的内容项目" maxlength="100" pattern=".*\S.*" title="请输入项目名称，至少包含一个非空白字符" required>
         </label>
         <div class="pair">
           <label>默认目标受众（选填）
@@ -91,41 +102,106 @@
             <input name="style" value="文章" maxlength="100" placeholder="例如：深度长文、公众号推文、周报">
           </label>
         </div>
-        <label>工作台数据目录（所有项目共用）<input id="welcomeDirectory" required placeholder="运行服务的电脑上的绝对路径"></label>
-        <p class="fieldHelp">可以沿用默认目录。修改后会复制并校验已有 SQLite 数据，再切换写入位置。</p>
-        <details id="initialSource"><summary>配置首个采集平台（选填）</summary>
-          <label>采集平台<input name="platform" list="collectionPlatforms" maxlength="80" placeholder="例如：视频频道、行业资讯、自建博客"></label>
-          <label>采集方式<select name="source_kind"><option value="rss">RSS / Atom</option><option value="web">公开静态网页</option><option value="api">JSON API</option><option value="notion">Notion 数据库</option></select></label>
-          <label>来源地址或数据库 ID<input name="source_address" maxlength="2000"></label>
-          <label>刷新间隔（分钟，0 表示手动）<input name="minutes" type="number" min="0" max="43200" value="0"></label>
+        <section class="setupIntro" aria-label="素材来源">
+          <fieldset class="choiceField"><legend>从哪里开始整理素材？</legend><div class="segmentedChoice"><label><input type="radio" name="library_provider" value="local" checked><span>先使用本机</span></label><label><input type="radio" name="library_provider" value="notion"><span>连接 Notion</span></label><label><input type="radio" name="library_provider" value="feishu"><span>连接飞书多维表格</span></label></div></fieldset>
+          <p id="welcomeLibraryHelp" aria-live="polite">可以上传本地文件，也可以跟踪平台账号和话题。</p>
+          <p class="fieldHelp">项目、素材和稿件保存在运行工作台的电脑上。选择线上资料库后，可在项目中授权并导入记录。</p>
+        </section>
+        <details class="operatorDetails"><summary>连接 AI 与多媒体服务（选填）</summary>
+          <p id="welcomeProcessingStatus" role="status">正在检查内容处理服务…</p>
+          <button type="button" class="secondary" data-config="connectionSettings">连接或检测内容处理服务</button>
+          <p class="fieldHelp">设置完成后，点「返回项目初始化」继续填写。</p>
+        </details>
+        <details id="initialSource" class="operatorDetails"><summary>先跟踪一个账号或话题（选填）</summary>
+          <p class="fieldHelp">选择要跟踪的话题或作者。创建项目后，在本机浏览器用「DM 发布助手」采集平台作品。</p>
+          <fieldset class="platformField"><legend>选择内容平台</legend><input type="hidden" name="platform" value="xiaohongshu"><div class="platformPicker" data-platform-picker></div></fieldset>
+          <fieldset class="choiceField"><legend>想跟踪什么</legend><div class="segmentedChoice"><label><input type="radio" name="mode" value="topic" checked><span>一个话题</span></label><label><input type="radio" name="mode" value="account"><span>一个账号</span></label></div></fieldset>
+          <label><span id="welcomeQueryLabel">话题关键词</span><input name="query" maxlength="2048" placeholder="例如 AI科普、旅行攻略、摄影教程" aria-describedby="welcomeQueryHelp"></label>
+          <p id="welcomeQueryHelp" class="fieldHelp">填写你关心的方向；留空也可以先创建项目。</p>
+          <label>采集账号备注（选填）<input name="collector_label" placeholder="例如：运营用浏览器账号"></label>
+          <p class="fieldHelp">备注仅供自己辨认。实际采集使用浏览器在该平台当前登录的账号。</p>
+          <div class="pair">
+            <label>每次最多采多少条<input name="limit" type="number" min="1" max="50" step="1" value="10" required></label>
+            <label>多久采一次<select name="minutes"><option value="0">需要时手动采集</option><option value="60">每小时</option><option value="360">每 6 小时</option><option value="1440">每天</option></select></label>
+          </div>
+          <p class="fieldHelp">定时任务到期后，在「采集管理」点击继续，用扩展确认本轮采集。</p>
+        </details>
+        <details id="onboardingStorage" class="operatorDetails"><summary>高级选项：更换本机保存文件夹</summary>
+          <p class="fieldHelp">使用默认位置无需填写。只有需要保存到另一块硬盘时才填写运行工作台的电脑上的完整路径，这不是手机上的文件夹，也不是数据库地址。</p>
+          <label>新文件夹路径（选填）<input id="welcomeDirectory" autocomplete="off" placeholder="留空，继续使用当前存储位置"></label>
+          <p class="fieldHelp">更换位置时会复制并校验所有项目的数据，原位置保留；目标目录已有数据库时不会覆盖。</p>
         </details>
         <div class="formActions">
-          <button type="submit" value="sample" class="primary">载入合成示例立即体验</button>
-          <button type="submit" value="import" class="secondary">导入我的本地素材</button>
-          <button type="submit" value="overview" class="ghost">直接进入总览</button>
+          <button type="submit" value="collection" class="primary">创建项目，进入采集</button>
+          <button type="submit" value="import" class="secondary">导入本地素材</button>
+          <button type="submit" value="overview" class="ghost">稍后采集，进入总览</button>
+          <button type="submit" value="sample" class="ghost">用示例试一遍</button>
         </div>
       </form>
     </section>
 
     <!-- 账号运营总览 -->
     <section id="overview">
-      <header class="pageHead"><div><h1>账号运营总览</h1><p id="accountScope"></p></div><div class="headActions"><label>统计日期<input type="date" id="accountDate" required></label><button type="button" id="homeWelcome" hidden>初始化工作台</button><button type="button" id="platformSetupBtn" class="secondary">接入设置</button><button id="addReport" class="primary">录入运营数据</button></div></header>
+      <header class="pageHead"><div><h1>账号运营总览</h1><p id="accountScope"></p></div><div class="headActions"><input type="hidden" id="accountStartDate"><label>统计日期范围<input type="date" id="accountDate" data-range-start="accountStartDate" required></label><details class="accountToolsMenu"><summary>账号管理</summary><div class="accountToolsPopover"><button type="button" id="platformSetupBtn" class="ghost">添加运营账号</button><button type="button" id="manageAccounts" class="ghost" aria-controls="accountRows" disabled>编辑或删除账号</button></div></details></div></header>
+      <div id="accountMetrics" aria-label="运营指标"></div>
       <form id="platformSetup" class="workCard narrowCard" hidden>
-        <div class="ph"><h2>平台接入设置</h2><button type="button" id="closePlatformSetup" class="ghost">关闭</button></div>
-        <p class="cardHint">可手动填写、导入 CSV，或通过下方第三方接口读取日报。</p>
-        <div class="pair"><label>平台<input name="platform" list="platforms" maxlength="40" required></label><label>账号名称<input name="account" list="knownPlatformAccounts" maxlength="100" required></label><datalist id="knownPlatformAccounts"></datalist></div>
-        <label>操作<select name="mode"><option value="register">登记账号，稍后填写日报</option><option value="csv">导入账号日报 CSV</option></select></label>
-        <div id="reportUpload" hidden><label>选择 UTF-8 CSV 文件<input type="file" name="file" accept=".csv,text/csv"></label><p class="fieldHelp">同一账号、同一日期的数据会被替换。<a id="dailyTemplate" download="账号日报模板.csv">下载 CSV 表头模板</a></p></div>
+        <div class="ph"><h2 id="accountSetupTitle">添加运营账号</h2><button type="button" id="closePlatformSetup" class="ghost">关闭</button></div>
+        <p id="accountSetupHint" class="cardHint">选择你运营的平台，填写用于区分账号的名称。</p>
+        <fieldset class="platformField"><legend>选择账号所在平台</legend><input type="hidden" name="platform" value="小红书"><div class="platformPicker" data-platform-picker data-platform-value="account"></div></fieldset><label>账号名称<input name="account" list="knownPlatformAccounts" maxlength="100" required placeholder="填写你在这个平台的账号名称"></label><datalist id="knownPlatformAccounts"></datalist>
+        <input type="hidden" name="mode" value="register">
+        <div id="reportUpload" hidden><label>选择 UTF-8 CSV 文件<input type="file" name="file" accept=".csv,text/csv"></label><p class="fieldHelp">按账号和日期更新首页的粉丝、阅读或播放、互动和发布数。同一天的旧数据会被替换。<a id="dailyTemplate" download="账号日报模板.csv">下载 CSV 表头模板</a></p></div>
         <button id="platformSave" class="primary">保存账号</button>
-        <div class="subDivider"></div><div class="formActions"><button type="button" data-config="thirdParty" class="secondary">第三方日报与稿件接口</button><button type="button" data-config="sourcesCard" class="ghost">配置素材采集源</button><button type="button" data-config="connectionSettings" class="ghost">查看 AI、Notion、转写与 OCR 接入配置</button></div>
       </form>
-      <div id="accountMetrics"></div><section class="platformSection"><div class="ph"><h2>平台表现</h2><small>按所选日期统计</small></div><div id="accountRows" aria-live="polite"></div></section><section id="reachPanel" class="workCard" hidden><div class="ph"><h2>近七天阅读 / 播放</h2><small>每日已报账号合计</small></div><div id="reachTrend"></div></section>
-      <form id="reportForm" class="workCard narrowCard" hidden><h2>账号日报</h2><p>填写平台后台的当日数据。同一账号、同一天可重新保存。</p><div class="pair"><label>平台<input name="platform" list="platforms" required maxlength="40"></label><datalist id="platforms"><option>微信公众号</option><option>小红书</option><option>抖音</option><option>哔哩哔哩</option><option>YouTube</option></datalist><label>账号名称<input name="account" required maxlength="100"></label><label>统计日期<input name="day" type="date" required></label><label>期末粉丝总数<input name="followers" type="number" min="0" max="1000000000000" required></label><label>当日阅读或播放量<input name="views" type="number" min="0" max="1000000000000" required></label><label>当日互动次数<input name="engagements" type="number" min="0" max="1000000000000" required></label><label>当日发布数<input name="published" type="number" min="0" max="100000000" required></label></div><button class="primary">保存日报</button> <button type="button" id="closeReport">取消</button></form>
+      <section id="accountPlatforms" class="platformSection">
+        <div class="ph"><h2>平台表现</h2><button type="button" id="addReport" class="ghost">填写日报</button></div>
+        <p id="homeIntroText" role="status"></p>
+        <details id="unreportedAccounts" hidden><summary></summary><div class="formActions"></div></details>
+        <div id="accountRows" aria-live="polite"></div>
+        <div id="accountEmpty" hidden>
+          <img src="/brand/chestnut.webp" alt="" width="64" height="116">
+          <div><h3>添加第一个运营账号</h3><p>登记账号后，即可填写日报并查看平台表现。</p>
+            <div class="formActions"><button type="button" class="primary" id="addFirstAccount">添加我的账号</button><button type="button" class="ghost" id="homeWelcome" hidden>设置首个项目</button></div>
+          </div>
+        </div>
+      </section>
+      <section id="reachPanel" class="workCard" hidden><div class="ph"><h2 id="reachTitle">近七天阅读 / 播放</h2><small id="reachHint">每日已报账号合计</small></div><div id="reachTrend"></div></section>
+      <details id="accountConnections"><summary>连接与自动回填</summary>
+      <section class="workCard">
+        <h2>抖音账号回填</h2>
+        <p id="douyinStatus" role="status" class="fieldHelp">正在检测浏览器助手…</p>
+        <button type="button" id="viewBoundProject" class="secondary" hidden>前往绑定项目</button>
+        <button type="button" id="viewDouyinDay" class="secondary" hidden>查看当日日报</button>
+        <div id="douyinInstall" hidden>
+          <ol>
+            <li><a href="/api/publishing/extension.zip" download>下载浏览器助手</a>，解压安装包。</li>
+            <li>打开 Chrome 或 Edge 的扩展管理页，开启「开发者模式」，选择「加载已解压的扩展程序」，选中含 manifest.json 的文件夹。</li>
+            <li>在同一浏览器用 localhost 或 127.0.0.1 打开本机工作台，刷新此页。</li>
+          </ol>
+        </div>
+        <div class="formActions">
+          <button type="button" id="douyinConnect" class="primary" hidden>连接抖音账号</button>
+          <button type="button" id="douyinSync" class="primary" hidden>立即回填</button>
+          <button type="button" id="douyinDaily" class="secondary" hidden>开启每日回填</button>
+          <button type="button" id="douyinRefresh" class="ghost" hidden>刷新连接状态</button>
+          <button type="button" id="douyinDisconnect" class="ghost" hidden>解除账号绑定</button>
+        </div>
+        <details class="operatorDetails"><summary>高级设置 · 统计接口同步</summary>
+          <p id="reportSyncStatus" role="status" class="fieldHelp">正在读取接口状态…</p>
+          <div class="formActions">
+            <button type="button" id="reportConnect" data-config="reportConnector" class="secondary" hidden>连接统计接口</button>
+            <button type="button" id="reportSyncNow" class="secondary" hidden>从接口立即回填</button>
+          </div>
+          <p class="fieldHelp" id="reportSyncHelp" hidden>同一平台、账号和日期的数据会用接口返回值更新。</p>
+          <label id="reportAutoLabel" hidden><input type="checkbox" id="reportAuto"> 工作台运行时每小时从接口回填</label>
+        </details>
+      </section>
+      </details>
+      <form id="reportForm" class="workCard narrowCard" hidden><div class="ph"><h2>账号日报</h2><button type="button" id="importDailyCsv" class="ghost">导入日报 CSV</button></div><p>填写平台后台的当日数据。同一账号、同一天可重新保存。</p><fieldset class="platformField"><legend>选择账号所在平台</legend><input type="hidden" name="platform" value="小红书"><div class="platformPicker" data-platform-picker data-platform-value="account"></div></fieldset><div class="pair"><label>账号名称<input name="account" required maxlength="100" placeholder="填写这个平台的账号名称"></label><label>统计日期<input name="day" type="date" required></label><label>期末粉丝总数<input name="followers" type="number" min="0" max="1000000000000" required></label><label>当日阅读或播放量<input name="views" type="number" min="0" max="1000000000000" required></label><label>当日互动次数<input name="engagements" type="number" min="0" max="1000000000000" required></label><label>当日发布数<input name="published" type="number" min="0" max="100000000" required></label></div><button class="primary">保存日报</button> <button type="button" id="closeReport">取消</button></form>
     </section>
     <section id="workflow" hidden>
       <div class="overviewHeader">
         <div class="overviewTitleGroup">
-          <h1 id="overviewTitle">工作台总览</h1>
+          <h1 id="overviewTitle">内容工作流</h1>
           <p id="overviewNote">正在读取项目状态…</p>
         </div>
         <div class="overviewTools">
@@ -133,24 +209,24 @@
         </div>
       </div>
 
-      <section id="firstProject" class="onboardingStrip" hidden>
-        <div class="onboardingText">
-          <strong>欢迎使用 DM 内容工作台</strong>
-          <span>可以用示例走一遍从素材到成稿的流程。</span>
-        </div>
-        <div class="onboardingActions">
-          <button type="button" id="quickSampleBtn" class="secondary smBtn">一键体验示例</button>
-          <button type="button" id="openWelcome" class="primary smBtn">初始化项目</button>
+      <section id="firstProject" class="workCard" hidden>
+        <h2>添加第一份素材</h2>
+        <p>从一份文件、一段文字或一个博主开始。整理素材后，就可以选题、写稿，再审核发布。</p>
+        <div class="formActions">
+          <button type="button" id="startWithFile" class="primary">导入文件或粘贴文字</button>
+          <button type="button" data-config="collectionTasks" class="secondary">从网上收集素材</button>
+          <button type="button" id="quickSampleBtn" class="ghost">用示例试一遍</button>
         </div>
       </section>
 
+      <details id="editorialQueue" class="workCard" hidden><summary></summary><div class="rowList"></div></details>
+      <section aria-labelledby="workflowStagesTitle"><h2 id="workflowStagesTitle">批次阶段</h2><div id="pipeline" aria-label="按阶段浏览批次"></div></section>
       <div class="homeLead flowLead">
         <section class="focusBento"><div class="coverStage" aria-hidden="true"><div class="folio"><small>内容手记</small><strong id="coverTitle"></strong><i></i><span id="coverDate"></span></div></div><div class="focusCopy"><h2>继续处理</h2><div id="focusSpotlight"></div></div></section>
-        <section class="progressBento"><div class="ph"><h2>生产概况</h2><small>当前项目</small></div><strong id="totalRunsVal"></strong><div id="stageMix" aria-hidden="true"></div><p id="progressCaption"></p><div class="ph"><h3>新建批次</h3><small>近 7 天 · UTC</small></div><div id="weekTrend" aria-label="每日新建批次"></div></section>
+        <section class="progressBento"><div class="ph"><h2>生产概况</h2><small>当前项目</small></div><strong id="totalRunsVal"></strong><div id="stageMix" aria-hidden="true"></div><p id="progressCaption"></p><div class="ph"><h3>新建批次</h3><small>近 7 天 · 本地日期</small></div><div id="weekTrend" aria-label="每日新建批次"></div></section>
 
       </div>
-      <section class="workCard dailyQueue"><div class="ph"><h2>每日批次进度</h2><label>创建日期（UTC）<input type="date" id="workDate"></label></div><div id="dailyRuns"></div></section>
-      <div id="pipeline" aria-label="按阶段浏览批次"></div>
+      <section class="workCard dailyQueue"><div class="ph"><h2>每日批次进度</h2><label>创建日期（本地）<input type="date" id="workDate"></label></div><div id="dailyRuns"></div></section>
       <section id="recentPanel" class="recentPanel"><div class="ph"><h2>最近内容</h2><div class="shelfTabs" aria-label="选择内容类型">
         <button data-shelf="recentMaterials">素材</button><button data-shelf="candidateShelf">选题</button><button data-shelf="outputs">成稿</button></div></div>
         <div id="recentMaterials" class="rowList"></div><div id="candidateShelf" class="rowList" hidden></div><div id="outputs" class="rowList" hidden></div>
@@ -169,11 +245,44 @@
         </div></div>
     </section>
 
-    <section id="channels" hidden><header class="pageHead"><div><h1>采集渠道</h1><p>查看项目正在跟踪的来源、更新频率和最近采集结果。</p></div></header>        <section class="channelPanel"><div class="ph"><h2>采集入口</h2><small>选择来源</small></div><button data-media="text"><b>文稿与表格</b><small>TXT · Markdown · CSV · JSON</small></button><button data-media="pdf"><b>研报与扫描件</b><small>PDF · 逐页提取</small></button><button data-media="audio"><b>采访与播客</b><small>音频 · 视频转写</small></button><button data-config="sourcesCard"><b>在线订阅</b><small>RSS · 网页 · API · Notion</small></button></section>      <section id="sourcesCard" class="workCard">
+    <div id="collectionHeader" hidden>
+      <header class="pageHead"><div><h1>采集管理</h1><p>从网上收集内容，或导入手头的文件和文字。两种方式添加的内容都可以在素材库查看。</p></div><div class="headActions"><button type="button" data-library="materials" class="ghost">查看素材库</button></div></header>
+      <nav aria-label="添加素材的方式" class="collectionModes">
+        <button type="button" id="channelMode" aria-controls="channels">按渠道采集</button>
+        <button type="button" id="sourceImportBtn" aria-controls="setup">手动导入</button>
+      </nav>
+    </div>
+    <section id="channels" hidden>
+      <nav class="sourceWorkspaceTabs" aria-label="素材来源类型" role="tablist"><button type="button" data-config="collectionTasks" role="tab" aria-controls="collectionTasks" aria-selected="true">平台内容</button><button type="button" data-config="onlineLibraries" role="tab" aria-controls="onlineLibraries" aria-selected="false" title="Notion / 飞书资料库">资料库</button><button type="button" data-config="sourcesCard" role="tab" aria-controls="sourcesCard" aria-selected="false">网站与 API</button></nav>
+      <section class="workCard" id="collectionTasks">
+        <div class="sectionTitle"><div><h2>跟踪账号和话题</h2><p class="cardHintInline">填写要读取的作者或话题。平台作品由本机 Chrome 或 Edge 中的「DM 发布助手」采集。</p></div></div>
+        <details id="collectionGuide" class="operatorDetails"><summary>如何安装助手并开始采集？</summary><ol>
+          <li>在运行工作台的电脑上，用 HTTP 打开 localhost 或 127.0.0.1（默认端口 8765）。</li>
+          <li><a href="/api/publishing/extension.zip" download>下载 DM 发布助手</a>并解压。在浏览器扩展管理页开启开发者模式，点击「加载已解压的扩展程序」，选择包含 manifest.json 的文件夹，再刷新工作台。</li>
+          <li>添加任务并点「立即采集」。点「去登录并继续」打开平台，在该标签页核对或登录采集账号。如果登录后离开了目标页，返回工作台再点一次继续。</li>
+          <li>在目标页打开工具栏的「DM 发布助手」，点「采集此页作品并提交」，按提示允许访问当前平台。保持弹窗打开直到出现结果，再返回工作台查看批次。</li>
+        </ol></details>
+        <form id="collectionTaskForm">
+          <fieldset class="platformField"><legend>选择内容平台</legend><input type="hidden" name="platform" value="xiaohongshu"><div class="platformPicker" data-platform-picker></div></fieldset>
+          <fieldset class="choiceField"><legend>想跟踪什么</legend><div class="segmentedChoice"><label><input type="radio" name="mode" value="topic" checked><span>一个话题</span></label><label><input type="radio" name="mode" value="account"><span>一个账号</span></label></div></fieldset>
+          <label><span id="taskQueryLabel">账号</span><input required name="query" placeholder="输入账号名称"></label>
+          <label>采集账号备注（选填）<input name="collector_label" placeholder="例如：运营用浏览器账号"><span class="fieldHelp">仅作备注。实际采集账号取决于浏览器在该平台的登录状态。</span></label>
+          <details class="taskOptions"><summary>采集条数与频率</summary>
+          <label>每次最多采多少条<input name="limit" type="number" min="1" max="50" step="1" value="20" required></label>
+          <label>多久采一次<select name="minutes"><option value="0">需要时手动采集</option><option value="60">每小时</option><option value="360">每 6 小时</option><option value="1440">每天</option></select></label></details>
+          <button type="submit" class="primary">添加采集任务</button>
+        </form>
+        <p id="taskReadiness" class="fieldHelp" role="status"></p>
+        <p id="taskNotice" role="status"></p>
+        <details class="operatorDetails"><summary>采集后能得到什么？</summary><p class="fieldHelp">图文会尝试读取正文、保存配图并识别图片文字。视频会尝试取得字幕或转写讲话，再抽取关键画面解析。素材库保留原始依据，并逐项说明未取得的内容。视频画面采用采样，不是逐帧读取。</p><p class="fieldHelp">定时任务在工作台运行时到期，等待你点击「去登录并继续」并在扩展内确认。</p></details>
+        <button type="button" class="ghost" id="refreshTasks" hidden>刷新任务</button>
+        <div id="taskList" class="sourceList"></div>
+      </section>
+      <details id="sourcesCard" class="workCard operatorDetails"><summary>网站订阅与 API 来源</summary>
         <div class="sectionTitle">
           <div>
-            <h2>在线自动采集源（RSS / 网页 / JSON API / Notion）</h2>
-            <p class="cardHintInline">支持手动立即抓取或按分钟间隔后台轮询，基于内容哈希自动增量去重</p>
+            <h2>管理网站与 API 来源</h2>
+            <p class="cardHintInline">使用 RSS 订阅、公开网页或自有 API 读取素材。平台账号和话题在「平台内容」中管理；Notion／飞书在「资料库」中管理。</p>
           </div>
         </div>
 
@@ -181,7 +290,7 @@
 
         <div class="subDivider"></div>
         <h3 class="subHeading">添加新在线采集源</h3>
-        <div id="sourceKindCards" class="kindPicker" role="group" aria-label="采集渠道类型选择">
+        <div id="sourceKindCards" class="kindPicker" role="group" aria-label="选择网站来源类型">
           <button type="button" class="kindCard active" data-kind="rss">
             <strong>RSS / Atom 订阅</strong>
             <span>博客、科技媒体、行业周刊、播客 Feed</span>
@@ -194,21 +303,20 @@
             <strong>JSON API 接口</strong>
             <span>内部或第三方 REST 接口，支持分页路径与 Bearer 令牌</span>
           </button>
-          <button type="button" class="kindCard" data-kind="notion">
-            <strong>Notion 数据库</strong>
-            <span>拉取已授权 Notion Database 记录作为原始素材</span>
+          <button type="button" class="kindCard" data-config="onlineLibraries">
+            <strong>Notion / 飞书资料库</strong>
+            <span>进入资料库页，连接、检测并导入素材</span>
           </button>
         </div>
 
         <form id="source" class="sourceFormBox">
-          <label>采集平台或站点<input name="platform" list="collectionPlatforms" maxlength="80" placeholder="选择或输入平台名称"></label>
-          <datalist id="collectionPlatforms"><option>YouTube</option><option>哔哩哔哩</option><option>微信公众号</option><option>小红书</option><option>抖音</option><option>Notion</option><option>独立博客</option></datalist>
-          <p class="fieldHelp">平台用于标记素材来源。请选择该平台提供的订阅源、公开静态网页或有权访问的 API，并填写实际地址。</p>
+          <label>资料分类（选填）<input name="platform" maxlength="80" placeholder="例如：行业资讯、客户资料"></label>
+          <p class="fieldHelp">分类只用来整理资料，不决定采集方式。</p>
           <div class="pair">
             <label>采集源名称
               <input name="name" maxlength="100" required placeholder="例如：行业快讯 RSS">
             </label>
-            <label>协议类型
+            <label>读取方式
               <select name="kind">
                 <option value="rss">RSS / Atom 订阅源</option>
                 <option value="web">公开静态网页 (HTTPS)</option>
@@ -221,8 +329,8 @@
             <label><span id="sourceAddressLabel">订阅源 HTTPS 地址</span>
               <input name="address" maxlength="500" required placeholder="https://example.com/feed.xml">
             </label>
-            <label>自动抓取间隔（分钟，填 0 仅手动刷新）
-              <input name="minutes" type="number" min="0" max="43200" value="60" required>
+            <label>多久更新一次
+              <select name="minutes"><option value="0">需要时手动更新</option><option value="60" selected>每小时</option><option value="360">每 6 小时</option><option value="1440">每天</option></select>
             </label>
           </div>
           <p id="sourceKindGuide" class="fieldHelp">填写公开可访问的 HTTPS RSS 或 Atom 订阅链接，自动解析标题、正文与链接。</p>
@@ -249,31 +357,32 @@
               <label>下一页链接路径（选填，最多连抓 10 页）
                 <input name="next_path" maxlength="100" placeholder="例如：meta.next_url">
               </label>
-              <label>鉴权令牌的环境变量名
-                <input name="token_alias" maxlength="40" placeholder="例如：DM_API_TOKEN_MAIN">
+              <label>接口凭据名称（选填）
+                <input name="token_alias" maxlength="100" placeholder="选择已保存的接口凭据">
               </label>
             </div>
           </div>
 
           <div class="formActions">
             <button type="button" id="previewSource" class="secondary">试采预览（不入库）</button>
-            <button type="submit" class="primary">保存并添加采集源</button>
+            <button type="submit" class="primary" id="saveSource">保存并添加采集源</button>
+            <button type="button" class="ghost" id="cancelSourceEdit" hidden>取消修改，添加新来源</button>
+            <button type="button" class="ghost" data-config="serviceCredentials">管理接口凭据与 Notion 授权</button>
           </div>
-          <pre id="sourcePreview" class="resultBox"></pre>
+          <pre id="sourcePreview" class="resultBox" role="status"></pre>
         </form>
-      </section>
+      </details>
 
 </section>
     <!-- 采集与导入工作台 (#setup) -->
     <section id="setup" hidden>
       <div class="pageHead">
         <div>
-          <h1>采集与导入素材</h1>
-          <p>支持本地表格、文稿、PDF（含扫描件 OCR）及播客音视频（ASR 转写）入库；也可切换配置 RSS、网页、JSON API 或 Notion 自动采集源。</p>
+          <h2>导入文件或粘贴文字</h2>
+          <p>上传文稿、表格、PDF、音频或视频，也可以直接粘贴文字。导入后会打开本次批次，点击「查看本批素材」即可查看本次导入的内容。</p>
         </div>
         <div class="headActions">
-          <button type="button" id="sample" class="secondary">载入合成示例</button>
-          <button type="button" data-config="sourcesCard" class="ghost">去配置在线定时采集源 →</button>
+          <button type="button" id="sample" class="secondary">试用示例数据</button>
         </div>
       </div>
 
@@ -319,6 +428,7 @@
             <div class="pair">
               <label>数据格式
                 <select name="format">
+                  <option value="auto">自动识别（默认纯文本）</option>
                   <option value="csv">CSV 表格（首行为列名，多条记录）</option>
                   <option value="json">JSON 数组（对象列表，多条记录）</option>
                   <option value="md">Markdown 文稿</option>
@@ -353,7 +463,7 @@
 
             <div class="formActions">
               <button type="button" id="previewImport" class="secondary">预览清洗结果</button>
-              <button type="submit" class="primary">导入并创建运行</button>
+              <button type="submit" class="primary">导入并打开批次</button>
             </div>
 
             <pre id="previewResult" class="resultBox" aria-live="polite"></pre>
@@ -366,39 +476,71 @@
     <section id="settings" hidden>
       <div class="pageHead">
         <div>
-          <h1>采集源、规则与引擎配置</h1>
-          <p>集中管理在线自动采集渠道、五阶段默认清洗/选题/写作规则，以及 AI 大模型、Notion、ASR 与 OCR 连接。</p>
+          <h1>配置管理</h1>
+          <p>调整项目默认规则和工作台服务。素材来源在「采集管理」管理，运营账号在「账号总览」管理。</p>
+          <button type="button" id="backFromSettings" class="secondary" hidden>返回刚才的页面</button>
         </div>
         <nav class="sectionJumps" aria-label="设置分区跳转">
           <button type="button" id="settingsWelcome" hidden>首次初始化</button>
-          <button type="button" data-config="sourcesCard">管理采集渠道</button>
-          <a href="#thirdParty">第三方连接</a>
-          <a href="#storageSettings">数据存储</a>
-          <a href="#rulesCard">默认业务规则</a>
-          <a href="#connectionSettings">AI 与多媒体引擎</a>
+          <button type="button" data-config="collectionTasks">管理平台采集</button>
+          <a href="#onlineLibraries">Notion / 飞书资料库</a>
+          <a href="#storageSettings">本机数据保存</a>
+          <a href="#reportConnector">日报导入接口</a><a href="#draftConnector">稿件发送接口</a>
+          <a href="#rulesCard">清洗、分析、选题与成稿</a>
+          <a href="#connectionSettings">模型与多媒体服务</a>
+          <a href="#serviceCredentials">授权与接口凭据</a>
           <a href="#projectCard">多项目与恢复</a>
         </nav>
       </div>
 
-      <section id="thirdParty" class="workCard"><div class="ph"><h2>第三方连接</h2><small>当前项目</small></div>
+      <section class="workCard" id="storageAdvanced">
+      <form id="storageSettings" class="narrowCard">
+        <h2>本机数据保存</h2><p id="storageLocation"></p>
+        <p class="fieldHelp">在工作台电脑运行 <code>python backup.py location</code> 可查看当前数据库的完整路径。</p>
+        <p>工作数据库保存全部项目、素材、配图、稿件和账号日报。当前使用本机 SQLite，工作台会自动创建和管理，不需要填写连接信息。</p>
+        <p>Notion／飞书资料库在「采集管理 → 按渠道采集 → 资料库」管理。导入的素材、稿件和历史记录保存在这里。</p>
+        <details class="operatorDetails"><summary>更换本机保存文件夹</summary><p class="fieldHelp">仅在需要保存到另一块硬盘时修改。填写的是运行工作台的电脑上的路径，不是手机路径或数据库地址。</p>
+        <label>新的完整文件夹路径<input name="directory" autocomplete="off" placeholder="填写新位置；不修改则无需保存"></label>
+        <p class="fieldHelp">保存前会复制并校验全部项目。原位置保留；目标已有数据库时不会覆盖。外接硬盘需要在使用期间保持连接。</p>
+        <button class="primary">复制数据并切换到新文件夹</button></details>
+        <p id="storageProgress" role="status"></p>
+      </form>
+      <details class="backupInfo operatorDetails"><summary>备份与恢复全部项目</summary>
+        <p class="fieldHelp">在运行工作台的电脑上打开项目目录，用下面的命令导出 SQLite 备份。备份可能包含已保存的资料库凭据，请保存在受控位置。</p>
+        <code>python backup.py export &lt;新的备份文件&gt;</code>
+        <p class="fieldHelp">核验备份的完整性与运行记录字段，再恢复到空目录试读稿件。服务密钥和模型配置文件需要单独保管。</p>
+        <code>python backup.py verify &lt;备份文件&gt;</code>
+        <p class="fieldHelp">恢复时指定一个未存放工作数据库的目录。可在启动前将 DM_DATA_DIR 指向恢复目录，打开工作台查看这些项目。</p>
+        <code>python backup.py restore &lt;备份文件&gt; --directory &lt;目标数据目录&gt;</code>
+      </details>
+      <section id="onlineLibraries" class="onlineLibraries" aria-labelledby="onlineLibrariesTitle">
+        <h3 id="onlineLibrariesTitle">连接线上资料库</h3><p>先选择服务、填写授权信息，再检测能否读取。检测通过后，可以把记录导入当前项目的素材库。</p>
+        <form id="onlineLibraryForm" class="narrowCard">
+          <fieldset class="choiceField"><legend>选择服务</legend><div class="segmentedChoice"><label><input type="radio" name="provider" value="notion" checked><span>Notion</span></label><label><input type="radio" name="provider" value="feishu"><span>飞书多维表格</span></label></div></fieldset>
+          <div id="onlineLibraryInstructions"></div>
+          <label>连接名称<input name="name" maxlength="100" required placeholder="例如：团队选题资料库"></label>
+          <label><span id="onlineAddressLabel">Notion 数据库链接</span><input name="address" required maxlength="2048" placeholder="粘贴数据库完整链接"></label>
+          <div id="onlineNotionCredentials"><label>Notion 集成密钥<input type="password" name="token" autocomplete="new-password" placeholder="首次连接时填写；修改连接时留空保留"></label></div>
+          <div id="onlineFeishuCredentials" hidden><label>飞书应用 App ID<input name="app_id" autocomplete="off" placeholder="飞书开放平台应用凭证中的 App ID"></label><label>飞书应用 App Secret<input type="password" name="app_secret" autocomplete="new-password" placeholder="首次连接时填写；修改连接时留空保留"></label><label>数据表 ID（链接中没有 table 时填写）<input name="table_id" placeholder="tbl 开头；粘贴完整数据表链接通常无需填写"></label></div>
+          <h4>哪些内容导入为素材？</h4><p id="onlineFieldHelp" class="fieldHelp">填写资料库中实际的列名。Notion 正文列留空时读取每条记录的页面内容。</p><div class="pair"><label>标题列名称<input name="title_field" required value="Name" placeholder="例如：标题"></label><label><span id="onlineBodyLabel">正文列名称（选填）</span><input name="body_field" placeholder="留空读取 Notion 页面正文"></label></div>
+          <div class="formActions"><button type="submit" class="primary">保存连接</button><button type="button" id="resetOnlineLibrary" class="ghost">新建另一条连接</button></div>
+        </form>
+        <p id="onlineLibraryStatus" role="status" aria-live="polite"></p><div id="onlineLibraryList"></div>
+      </section>
+      </section>
+      <section id="thirdParty" class="workCard"><div class="ph"><h2 id="connectorTitle">日报导入接口</h2><small>有现成 API 时使用</small></div><p id="connectorPurpose" class="fieldHelp">从已有统计系统读取账号日报，结果显示在账号运营总览。</p>
         <label>连接用途<select id="connectorKind"><option value="reports">读取账号日报 · GET JSON</option><option value="drafts">发送审核稿件 · POST Webhook</option></select></label>
-        <form id="connectorForm"><div class="pair"><label>HTTPS 接口地址<input name="url" required type="url" maxlength="2000" placeholder="https://api.example.com/reports"></label><label>Bearer 令牌环境变量（选填）<input name="token_alias" maxlength="100" pattern="DM_API_TOKEN_[A-Z0-9_]+" placeholder="DM_API_TOKEN_ANALYTICS"></label></div>
+        <form id="connectorForm"><div class="pair"><label>HTTPS 接口地址<input name="url" required type="url" maxlength="2000" placeholder="https://api.example.com/reports"></label><label>接口凭据名称（选填）<input name="token_alias" maxlength="100" pattern="DM_API_TOKEN_[A-Z0-9_]+" placeholder="DM_API_TOKEN_ANALYTICS"></label></div>
         <div id="connectorMapping"><div class="pair"><label>记录数组路径<input name="records_path" placeholder="如 data.items，顶层数组可留空"></label><label>下一页 URL 字段路径（选填）<input name="next_path" placeholder="如 links.next"></label></div><h3>每条记录的字段映射</h3><div class="pair" id="reportMappingFields"></div></div>
         <p id="webhookHelp" class="fieldHelp" hidden>在审核通过的稿件详情中预览目标地址和 JSON，然后手动发送。接收端可用 Idempotency-Key 识别重试。</p>
         <button class="primary">保存连接</button></form><p id="connectorState" role="status"></p>
         <div class="formActions" id="reportConnectActions"><button type="button" id="connectorPreview">预览已保存接口</button><button type="button" id="connectorImport" disabled>导入已预览日报</button></div><pre id="connectorResult" class="resultBox" aria-live="polite"></pre>
       </section>
-      <form id="storageSettings" class="workCard narrowCard">
-        <h2>数据存储位置</h2><p id="storageLocation"></p>
-        <label>工作台电脑上的目录<input name="directory" required placeholder="输入绝对目录路径"></label>
-        <p class="fieldHelp">账号日报、采集源、素材和稿件都保存在此目录的 workbench.sqlite3。切换时会复制所有项目并校验完整性；原数据库保留，已有同名数据库的目标目录不会被覆盖。</p>
-        <button class="primary">保存并切换目录</button>
-      </form>
       <section id="rulesCard" class="workCard">
         <div class="sectionTitle">
           <div>
-            <h2>五阶段默认业务规则（清洗 · 分析 · 选题 · 生产 · 归档）</h2>
-            <p class="cardHintInline">自动应用于当前项目后续新建的所有导入与采集批次</p>
+            <h2>项目处理规则</h2>
+            <p class="cardHintInline">用于当前项目后续的新批次；已有批次保留原配置，重算时创建新批次。</p>
           </div>
           <span id="connectionStatus" class="statusSummary"></span>
         </div>
@@ -454,13 +596,38 @@
       <section id="connectionSettings" class="workCard">
         <div class="sectionTitle">
           <div>
-            <h2>AI 大模型与多媒体引擎连接</h2>
-            <p class="cardHintInline">密钥通过服务环境变量注入（不落明文库），下方实时显示就绪状态并支持一键连通性自检</p>
+            <h2>内容处理能力</h2>
+            <p class="cardHintInline">查看能否理解内容、读出图片文字、把视频讲话转成文字。已连接的能力会在采集时自动使用。</p>
           </div>
         </div>
 
+        <div id="processingConnection" class="processingConnection">
+          <h3>选择内容处理服务</h3>
+          <p class="fieldHelp">这台 Mac 已安装本地模型时，直接连接即可。模型会用于理解采集内容和图片，语音服务用于视频讲话转文字。</p>
+          <div class="formActions"><button type="button" id="connectLocalProcessing" class="primary">连接这台电脑的本地服务</button><button type="button" id="showCustomProcessing" class="secondary" aria-expanded="false" aria-controls="customProcessing">使用我自己的模型服务</button></div>
+          <p id="processingSettingsStatus" role="status" aria-live="polite">正在读取连接设置…</p>
+          <form id="customProcessing" hidden>
+            <h3>连接你已有的服务</h3>
+            <p class="fieldHelp">没有自己的服务就使用上面的本地服务。填写后可直接保存和检测，不需要编辑配置文件。</p>
+            <div class="pair"><label>内容理解服务地址<input name="model_base" type="url" required placeholder="https://你的服务地址/v1"></label><label>内容理解模型名称<input name="model_name" required placeholder="服务提供方给出的模型名称"></label></div>
+            <label>内容理解服务密钥（选填）<input name="model_key" type="password" autocomplete="new-password" placeholder="没有密钥可留空"></label>
+            <details class="operatorDetails"><summary>连接独立的语音转写服务（选填）</summary><p class="fieldHelp">视频没有字幕时需要转写服务。这里留空会停用当前转写服务。</p><div class="pair"><label>语音服务地址<input name="asr_base" type="url" placeholder="https://你的语音服务地址/v1"></label><label>语音模型名称<input name="asr_name" placeholder="服务提供方给出的语音模型名称"></label></div><label>语音服务密钥（选填）<input name="asr_key" type="password" autocomplete="new-password" placeholder="没有密钥可留空"></label></details>
+            <button type="submit" class="primary">保存并检测内容理解</button>
+          </form>
+        </div>
         <div id="envMatrix" class="envMatrix"></div>
 
+        <details id="scanSettingsPanel" class="operatorDetails"><summary>扫描 PDF 文字识别（OCR）</summary>
+          <form id="scanSettings" class="narrowCard">
+            <p class="fieldHelp">适用于这台工作台的所有项目。普通文字 PDF 可直接导入；扫描件需要在工作台电脑安装 Poppler、Tesseract 和对应语言包。</p>
+            <label><input name="enabled" type="checkbox"> 导入扫描 PDF 时识别文字</label>
+            <label>识别语言<input name="language" required maxlength="120" pattern="[A-Za-z0-9_]+(\+[A-Za-z0-9_]+)*" title="填写语言代码，例如 eng 或 chi_sim+eng" value="eng" aria-describedby="scanLanguageHelp"></label>
+            <p class="fieldHelp" id="scanLanguageHelp">英文填 eng，简体中文填 chi_sim，中英混排填 chi_sim+eng。</p>
+            <button type="submit" class="secondary" disabled>保存识别设置</button>
+            <p role="status" id="scanSettingsStatus"></p>
+          </form>
+        </details>
+        <details id="advancedConnectionCheck" class="operatorDetails"><summary>更多连接检测</summary>
         <form id="connectionCheck" class="checkBox">
           <h3 class="subHeading">在线接口与本机工具自检</h3>
           <div class="pair">
@@ -482,20 +649,16 @@
           </div>
           <pre id="connectionResult" class="resultBox" aria-live="polite"></pre>
         </form>
+        </details>
 
-        <div class="backupInfo">
-          <strong>本地 SQLite 存储与热备份</strong>
-
-          <p class="fieldHelp">命令行热备份：<code>python backup.py export &lt;备份文件&gt;</code> · 恢复备份：<code>python backup.py restore &lt;备份文件&gt; --directory &lt;目标数据目录&gt;</code></p>
-        </div>
       </section>
 
       <div id="projectCard" class="settingsGrid">
         <form id="newProject" class="workCard">
           <h2>新建独立工作项目</h2>
-          <p class="cardHint">按栏目、客户或专题拆分完全隔离的内容工作区。</p>
+          <p class="cardHint">新项目单独管理素材、稿件和账号日报，共用这台工作台的存储位置和模型服务。创建后可以直接添加第一份素材。</p>
           <label>新项目名称
-            <input name="name" maxlength="100" required placeholder="例如：科技深度专栏 · Q4">
+            <input name="name" maxlength="100" pattern=".*\S.*" title="请输入项目名称，至少包含一个非空白字符" required placeholder="例如：科技深度专栏 · Q4">
           </label>
           <div class="formActions">
             <button type="submit" class="primary">创建并切换项目</button>
@@ -505,8 +668,8 @@
         <div class="workCard">
           <h2>从 Notion 远端快照恢复</h2>
           <p class="cardHint">将之前备份到 Notion 页面中的运行快照完整还原至当前项目。</p>
-          <details open>
-            <summary>展开 Notion 快照恢复</summary>
+          <details>
+            <summary>恢复已有快照</summary>
             <form id="restorePage">
               <label>Notion 快照页面 ID 或链接
                 <input name="page_id" maxlength="100" required placeholder="粘贴 Notion 页面链接或 32 位 ID">
@@ -530,6 +693,7 @@
         <div id="detailQuickLinks" class="headActions"></div>
       </div>
 
+      <div id="workflowRelations" class="formActions" hidden></div>
       <ol id="stages" aria-label="五阶段工作进度"></ol>
 
       <div id="task" class="detailStack"></div>
@@ -540,13 +704,49 @@
       </details>
     </section>
 
+    <section id="publishing" hidden>
+      <header class="pageHead"><div><h1>发布台</h1><p id="publishScope"></p></div><button type="button" id="publishCompose" class="primary" hidden>新建发布任务</button></header>
+      <div class="publishLayout">
+        <form id="publishForm" class="workCard">
+          <div class="ph"><h2>准备发布内容</h2><button type="button" id="publishShowTasks">查看任务</button></div>
+          <p class="cardHint">创建任务会在当前项目保存稿件、附件和目标账号。实际发布需到各平台后台确认。</p>
+          <p id="publishSource" class="cardHint" hidden></p>
+          <fieldset id="publishFields">
+            <label>标题<input name="title" maxlength="200" required></label>
+            <label>正文<textarea name="body" maxlength="1000000" rows="7" required></textarea></label>
+            <label>上传素材（合计最多 64 MiB）<input type="file" name="files" multiple></label>
+            <div id="publishAccounts"></div>
+            <div class="formActions"><button type="button" id="publishAdd">添加目标账号</button><button class="primary">创建发布任务</button></div>
+          </fieldset>
+        </form>
+        <section id="publishQueue" class="workCard"><div class="ph"><h2 tabindex="-1">发布任务</h2><button type="button" id="publishRefresh">刷新</button></div>
+          <p class="cardHint">账号名称仅供跟踪。发布前请核对平台当前登录的账号，发布后粘贴作品链接并确认。</p>
+          <div id="publishPosts"></div>
+        </section>
+      </div>
+    </section>
     <!-- 素材库 / 选题库 / 成稿库 (#library) -->
     <section id="library" hidden aria-label="内容资产库"></section>
   </main>
 
-  <script src="/accounts.js"></script>
-  <script src="/integrations.js"></script>
-  <script src="/dashboard.js"></script>
-  <script src="/library.js"></script>
+  <script src="/platform-picker.js?v=20261127-ui6"></script>
+  <script src="/ui-icons.js?v=20261127-ux1"></script>
+  <script src="/accounts.js?v=20261128-r1"></script>
+  <script src="/integrations.js?v=20261128-r1"></script>
+  <script src="/dashboard.js?v=20261128-collection"></script>
+  <script src="/collection-tasks.js?v=20261128-collection"></script>
+  <script src="/processing-settings.js?v=20261128-r1"></script>
+  <script src="/online-libraries.js?v=20261128-r1"></script>
+  <script src="/workflow-settings.js?v=20261128-r1"></script>
+  <script src="/stage-tools.js?v=20261128-r1"></script>
+  <script src="/service-credentials.js?v=20261127-ux1"></script>
+  <script src="/draft-archive.js?v=20261128-r1"></script>
+  <script src="/source-workspace.js?v=20261128-r1"></script>
+  <script src="/configuration-center.js?v=20261128-r1"></script>
+  <script src="/date-picker.js?v=20261127-ui6"></script>
+  <script src="/select-control.js?v=20261127-ui6"></script>
+  <script src="/library.js?v=20261128-r1"></script>
+  <script src="/publishing.js?v=20261128-r1"></script>
+  <script src="/workbench-ux.js?v=20261128-r1"></script>
 </body>
 </html>

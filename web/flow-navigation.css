@@ -1,0 +1,22 @@
+/* Task-specific navigation, with one editor for each source and purpose. */
+.collectionModes { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-bottom: 16px; background: var(--subtle); border-radius: var(--r-ctrl); }
+.collectionModes button { min-height: 44px; padding-inline: 16px; border: 1px solid transparent; background: transparent; }
+.collectionModes button[aria-pressed=true] { background: var(--card); border-color: var(--accent-line); color: var(--accent-ink); font-weight: 650; }
+.sourceWorkspaceTabs {display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:24px;padding:0;overflow-x:auto;}
+.sourceWorkspaceTabs button {border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:var(--t2);padding:12px 18px;min-height:48px;white-space:nowrap;flex:none;}
+.sourceWorkspaceTabs button:hover {background:var(--subtle);}
+.sourceWorkspaceTabs button[aria-selected=true] {border-bottom-color:var(--accent);color:var(--accent-ink);font-weight:650;}
+#channels #sourcesCard > summary {display:none;}
+#channels #onlineLibraries {margin-top:0;}
+#onlineLibrariesTitle {font-size:19px;margin-bottom:8px;}
+.accountToolsMenu {position:relative;}
+.accountToolsMenu > summary {display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:9px 12px;border:1px solid var(--line-strong);border-radius:9px;background:var(--card);font-size:13px;color:var(--t2);}
+.accountToolsMenu > summary::before {order:2;margin:0;}
+.accountToolsPopover {position:absolute;top:calc(100% + 8px);right:0;z-index:90;width:220px;max-width:calc(100vw - 24px);padding:6px;background:var(--card);border:1px solid var(--line);border-radius:12px;box-shadow:var(--chestnut-popover-shadow);}
+.accountToolsPopover button.ghost {display:flex;justify-content:flex-start;align-items:center;gap:8px;min-height:44px;border:0;background:transparent;width:100%;text-align:left;font-size:13px;}
+.accountToolsPopover button.ghost:hover {background:var(--accent-bg);color:var(--accent-ink);}
+#backFromSettings {position:sticky;top:12px;z-index:5;margin:0 0 16px;background:var(--card);border-color:var(--line-strong);color:var(--accent-ink);}
+#settings :is(.configSection,fieldset.stageSettings) {scroll-margin-top:76px;}
+@media(max-width:1179px){#backFromSettings{top:122px;}#settings :is(.configSection,fieldset.stageSettings){scroll-margin-top:190px;}}
+
+@media(max-width:600px){.sourceWorkspaceTabs{gap:0;margin-bottom:18px;}.sourceWorkspaceTabs button{padding:10px;font-size:12px;}.accountToolsPopover{width:210px;}}

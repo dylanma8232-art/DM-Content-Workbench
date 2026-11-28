@@ -1,4 +1,5 @@
 import json
+from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import patch
 from uuid import uuid4
 
@@ -82,6 +83,10 @@ class LibraryTests(WorkbenchFixture):
         )
         response.raise_for_status()
         run = response.json()["id"]
+        for ref in refs:
+            (original,) = self.library('materials', run_id=ref['run_id'])['items']
+            self.assertEqual(original['material_id'], ref['material_id'])
+            self.assertIn('shared', original['original'])
         self.advance(run, 1)
         self.advance(run, 2)
         group = self.library("topics", run_id=run, source="Paper II", status="候选")[
@@ -116,21 +121,40 @@ class LibraryTests(WorkbenchFixture):
                 )
             )
 
+    def test_concurrent_decisions_accept_one_per_observed_review_count(self):
+        run = self.create()
+        for stage in range(1, 5):
+            self.advance(run, stage, topic_id=1)
+        path = f'/api/runs/{run}'
+        def decide(decision):
+            return self.client.post(path + '/review', json={
+                'version': 1, 'decision': decision, 'expected_review_count': 0})
+        with ThreadPoolExecutor(2) as pool:
+            results = list(pool.map(decide, ['通过', '退回']))
+        self.assertCountEqual([r.status_code for r in results], [200, 409])
+        reviews = self.client.get(path).json()['payload']['reviews']
+        self.assertEqual(len(reviews), 1)
+        self.assertNotIn('expected_review_count', reviews[0])
+
     def test_current_review_and_actual_edit_time(self):
         run = self.create()
         for stage in range(1, 5):
             self.advance(run, stage, topic_id=1)
         path = f"/api/runs/{run}"
         original = self.library("drafts")["items"][0]
-        for decision in ("通过", "退回"):
-            self.client.post(
-                path + "/review", json={"version": 1, "decision": decision}
-            ).raise_for_status()
+        first_body = self.client.get(path + '/export?version=1').text
+        review = {"version": 1, "decision": "通过"}
+        self.client.post(path + "/review", json=review).raise_for_status()
+        for stale in (review, {**review, "expected_review_count": 0, "decision": "退回"}):
+            self.assertEqual(self.client.post(path + "/review", json=stale).status_code, 409)
+        self.client.post(path + "/review", json={**review, "decision": "退回", "expected_review_count": 1}).raise_for_status()
         self.assertEqual(self.library("drafts")["items"][0]["status"], "退回")
         self.client.put(
             path + "/draft", json={"version": 1, "content": "Updated"}
         ).raise_for_status()
         edited = self.library("drafts")["items"][0]
+        self.assertEqual(self.client.get(path + '/export?version=1').text, first_body)
+        self.assertEqual(self.client.get(path + '/export?version=2').text, 'Updated')
         self.assertGreater(edited["updated"], original["updated"])
         self.assertEqual(
             (edited["key"], edited["version"], edited["status"]),
@@ -232,6 +256,8 @@ class LibraryTests(WorkbenchFixture):
             with app.database() as conn:
                 conn.execute("UPDATE runs SET created=? WHERE id=?", (stamp, run))
         day = "2026-11-25"
+        shanghai = self.library("materials", since=day, until=day, since_offset=-480, until_offset=-480)["items"]
+        self.assertEqual({row['created'] for row in shanghai}, {stamps[0], stamps[1]})
         rows = self.library("materials", since=day, until=day)["items"]
         self.assertEqual(
             [row["created"] for row in rows], [stamps[2]] * 2 + [stamps[1]] * 2

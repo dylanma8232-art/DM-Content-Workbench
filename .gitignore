@@ -153,6 +153,7 @@ activemq-data/
 .env
 .envrc
 .venv
+.venv-local-ai/
 env/
 venv/
 ENV/
@@ -226,6 +227,7 @@ __marimo__/
 .env.*
 !.dm.env.example
 .dm.env.*
+.dm.env-*
 !.dm.env.example
 *.sqlite
 *.sqlite3

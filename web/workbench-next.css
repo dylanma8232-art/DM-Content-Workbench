@@ -1,0 +1,1399 @@
+/* DM Content Workbench · Next-Gen Unified Editorial-Tech Design System
+   Preserves Chestnut IP (栗子) + all existing DOM IDs/behaviors while elevating
+   visual craft, live data-flow language, interaction pathways, and component unity. */
+
+:root {
+  /* Refined Luminous Warm-Tech Studio + Chestnut Copper + Telemetry Tokens */
+  --bg: #faf8f4;
+  --bg-elevated: #f5f1ea;
+  --card: #ffffff;
+  --subtle: #f2ede5;
+  --subtle-hover: #e8e1d6;
+  --line: #e4ddd3;
+  --line-strong: #c9bfb2;
+
+  --t1: #1f1d1a;
+  --t2: #524c44;
+  --t3: #6c6358;
+
+  /* Brand Chestnut Copper */
+  --accent: #cc521b;
+  --accent-solid: #c84f18;
+  --accent-hover: #a83f10;
+  --accent-bg: #fff2e8;
+  --accent-line: #eabfa4;
+  --accent-ink: #8f3711;
+
+  /* Tech Data-Flow Telemetry Accent (restrained precision cyan-teal for live conduits) */
+  --flow-cyan: #0e8a8d;
+  --flow-cyan-soft: color-mix(in srgb, #0e8a8d 12%, transparent);
+  --flow-amber: #e27828;
+  --flow-dark: #1d1a17;
+  --flow-dark-2: #28221c;
+  --flow-dark-line: color-mix(in srgb, #ffffff 13%, transparent);
+
+  /* Semantic */
+  --good: #1f6b4b;
+  --good-bg: #eaf6f0;
+  --good-line: #b4d9c7;
+  --info: #2d5c84;
+  --info-bg: #edf4fb;
+  --info-line: #bfd5ea;
+  --warn: #8a5610;
+  --warn-bg: #fff5dc;
+  --warn-line: #e9cf93;
+  --crit: #b33228;
+  --crit-bg: #fdf0ee;
+  --crit-line: #e8b7b0;
+
+  /* 5-Stage Pipeline Spectrum */
+  --s1: #c8521b;
+  --s2: #0e8a8d;
+  --s3: #b37417;
+  --s4: #6a52a3;
+  --s5: #1f6b4b;
+  --stage0: var(--s1);
+  --stage1: var(--s2);
+  --stage2: var(--s3);
+  --stage3: var(--s4);
+  --stage4: var(--s5);
+
+  /* Unified Geometry & Depth */
+  --r-card: 16px;
+  --r-ctrl: 10px;
+  --r-pill: 999px;
+  --shadow: 0 1px 2px rgb(31 24 16 / 4%), 0 6px 20px rgb(31 24 16 / 4.5%);
+  --shadow-hover: 0 4px 12px rgb(31 24 16 / 7%), 0 12px 28px rgb(31 24 16 / 7%);
+  --chestnut-popover-shadow: 0 16px 40px rgb(25 20 15 / 16%), 0 2px 8px rgb(25 20 15 / 8%);
+  --chestnut-rail: 244px;
+  --chestnut-space: clamp(18px, 2.6vw, 40px);
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --t-fast: 150ms;
+  --t-mid: 240ms;
+}
+
+/* ==========================================================================
+   1. Ambient Studio Canvas & Browser Surface Polish
+   ========================================================================== */
+html {
+  scrollbar-gutter: stable;
+  background: var(--bg);
+}
+
+body {
+  background: var(--bg);
+  color: var(--t1);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle warm-tech ambient wash (never noisy, zero grid clutter) */
+.bgWash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(60% 42% at 14% 0%, color-mix(in srgb, var(--accent) 6.5%, transparent), transparent 70%),
+    radial-gradient(48% 38% at 92% 4%, color-mix(in srgb, var(--flow-cyan) 5.5%, transparent), transparent 68%),
+    var(--bg);
+}
+
+/* Crisp top hairline progress accent on workspace stage */
+.stageMain {
+  position: relative;
+  padding: 28px var(--chestnut-space) 64px;
+}
+
+/* ==========================================================================
+   2. Navigation Rail & Mobile Header (Unified + Chestnut IP + Command Trigger)
+   ========================================================================== */
+.topBar {
+  background: color-mix(in srgb, var(--card) 92%, var(--bg));
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-color: var(--line);
+}
+
+.brand {
+  align-items: center;
+  padding: 6px 4px;
+  border-radius: 12px;
+  transition: background-color var(--t-fast) ease, transform var(--t-fast) var(--ease-out-expo);
+}
+.brand:hover {
+  background: color-mix(in srgb, var(--accent-bg) 65%, transparent);
+}
+.brand .mark {
+  position: relative;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  padding: 2px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 20%, var(--card)), var(--accent-bg));
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, var(--line));
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgb(200 79 24 / 12%);
+}
+.brand .mark img {
+  border-radius: 9px;
+  object-fit: cover;
+}
+.brandName {
+  font-size: 15.5px;
+  font-weight: 740;
+  letter-spacing: -0.02em;
+  color: var(--t1);
+}
+.brandTag {
+  font-size: 11px;
+  color: var(--t3);
+  margin-top: 1px;
+}
+
+/* Project switcher pill */
+.projectPill {
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  transition: border-color var(--t-fast) ease, background-color var(--t-fast) ease;
+}
+.projectPill:hover {
+  border-color: var(--line-strong);
+  background: var(--card);
+}
+.projectPill .projAddBtn {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--t2);
+  transition: all var(--t-fast) ease;
+}
+.projectPill .projAddBtn:hover {
+  background: var(--accent-bg);
+  border-color: var(--accent-line);
+  color: var(--accent-ink);
+}
+
+/* Quick-Jump Command Palette Trigger (injected by workbench-ux.js) */
+.cmdTriggerBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  color: var(--t3);
+  font-size: 12.5px;
+  font-weight: 520;
+  cursor: pointer;
+  transition: border-color var(--t-fast) ease, background-color var(--t-fast) ease, color var(--t-fast) ease;
+}
+.cmdTriggerBtn:hover {
+  border-color: var(--accent-line);
+  background: var(--card);
+  color: var(--t1);
+}
+.cmdTriggerBtn .cmdLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+}
+.cmdTriggerBtn kbd {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--t2);
+  flex: none;
+}
+
+/* Sidebar Navigation Items & Logical Group Separators */
+.segNav {
+  gap: 3px;
+}
+.segNav button {
+  position: relative;
+  min-height: 40px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  color: var(--t2);
+  font-size: 13.5px;
+  font-weight: 540;
+  transition: background-color var(--t-fast) ease, color var(--t-fast) ease, border-color var(--t-fast) ease, transform var(--t-fast) var(--ease-out-expo);
+}
+.segNav button:hover:not(:disabled) {
+  background: var(--subtle);
+  color: var(--t1);
+}
+.segNav button[aria-current="page"],
+.segNav button[aria-current="page"]:hover:not(:disabled) {
+  background: linear-gradient(90deg, var(--accent-bg), color-mix(in srgb, var(--accent-bg) 55%, var(--card)));
+  border-color: color-mix(in srgb, var(--accent-line) 75%, transparent);
+  color: var(--accent-ink);
+  font-weight: 680;
+}
+.segNav button[aria-current="page"] .uiIcon {
+  color: var(--accent);
+}
+.navCount {
+  margin-left: auto;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  background: var(--subtle);
+  color: var(--t2);
+  font-size: 11px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.segNav button[aria-current="page"] .navCount {
+  background: color-mix(in srgb, var(--accent) 14%, var(--card));
+  color: var(--accent-ink);
+}
+
+/* Desktop rail subtle group separation between Dispatch / Assets / Output */
+@media (min-width: 1180px) {
+  .topBarInner {
+    gap: 18px;
+    padding: 22px 16px 18px;
+  }
+  .brandCluster {
+    gap: 12px;
+  }
+  .segNav #channelNav {
+    margin-top: 10px;
+  }
+  .segNav #publishingNav {
+    margin-top: 10px;
+  }
+  .segNav #channelNav::before,
+  .segNav #publishingNav::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    top: -6px;
+    height: 1px;
+    background: var(--line);
+    pointer-events: none;
+  }
+}
+
+/* Live Telemetry Status Lights in Rail Footer */
+.lights {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.light {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+  padding: 7px 11px;
+  font-size: 12.5px;
+  color: var(--t2);
+  transition: border-color var(--t-fast) ease, background-color var(--t-fast) ease, color var(--t-fast) ease;
+}
+.light:hover {
+  border-color: var(--line-strong);
+  background: var(--card);
+  color: var(--t1);
+}
+.light::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.light.ok::before {
+  background: var(--good);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 18%, transparent);
+}
+.light.warn::before {
+  background: var(--warn);
+}
+.light.bad::before {
+  background: var(--crit);
+}
+
+/* Primary CTA in Sidebar */
+button.topCta.primary {
+  background: linear-gradient(135deg, var(--accent-solid), #b54212);
+  border: 1px solid color-mix(in srgb, var(--accent-hover) 50%, transparent);
+  color: #ffffff;
+  font-weight: 650;
+  box-shadow: 0 4px 14px rgb(200 79 24 / 22%);
+  transition: transform var(--t-fast) var(--ease-out-expo), box-shadow var(--t-fast) ease, filter var(--t-fast) ease;
+}
+button.topCta.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgb(200 79 24 / 28%);
+  filter: brightness(1.03);
+}
+button.topCta.primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* ==========================================================================
+   3. Global Component Unification (Buttons, Cards, Tabs, Badges, Inputs)
+   ========================================================================== */
+button, a.download {
+  border-radius: var(--r-ctrl);
+  transition:
+    background-color var(--t-fast) ease,
+    border-color var(--t-fast) ease,
+    color var(--t-fast) ease,
+    box-shadow var(--t-fast) ease,
+    transform var(--t-fast) var(--ease-out-expo);
+}
+button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+/* Fix inconsistent pill/circle smBtn like #refreshHomeBtn */
+button.smBtn,
+#refreshHomeBtn {
+  border-radius: var(--r-ctrl) !important;
+  min-height: 38px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 560;
+}
+
+button.primary, #library .lib-open, #focusSpotlight button {
+  border-radius: var(--r-ctrl);
+  background: var(--accent-solid);
+  border: 1px solid var(--accent-solid);
+  color: #ffffff;
+  font-weight: 620;
+  box-shadow: 0 2px 8px rgb(200 79 24 / 16%);
+}
+button.primary:hover:not(:disabled),
+#library .lib-open:hover:not(:disabled),
+#focusSpotlight button:hover:not(:disabled) {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  box-shadow: 0 4px 12px rgb(200 79 24 / 24%);
+}
+
+button.secondary {
+  border-radius: var(--r-ctrl);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-line);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+button.secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent-bg) 78%, var(--accent-line));
+  border-color: var(--accent);
+}
+
+button.ghost {
+  border-radius: var(--r-ctrl);
+  background: var(--card);
+  border: 1px solid var(--line-strong);
+  color: var(--t2);
+  font-weight: 560;
+}
+button.ghost:hover:not(:disabled) {
+  background: var(--subtle);
+  border-color: var(--t3);
+  color: var(--t1);
+}
+
+/* Unified Working Surfaces */
+.workCard, .stageCard, .recentPanel, .activity, .homeLead section,
+#library .lib-layout, #library .lib-filters, #library .lib-dates,
+.platformEmpty, #accountEmpty {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+
+/* Unified Segmented & Tab Controls */
+.collectionModes,
+.shelfTabs {
+  background: var(--subtle);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  padding: 3px;
+  gap: 3px;
+}
+.collectionModes button,
+.shelfTabs button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  color: var(--t2);
+  font-weight: 560;
+}
+.collectionModes button[aria-pressed="true"],
+.shelfTabs button[aria-pressed="true"] {
+  background: var(--card);
+  border-color: var(--line);
+  color: var(--accent-ink);
+  font-weight: 660;
+  box-shadow: 0 1px 4px rgb(31 24 16 / 8%);
+}
+
+.sourceWorkspaceTabs button {
+  position: relative;
+  font-weight: 560;
+  border-bottom: 2px solid transparent;
+  transition: color var(--t-fast) ease, background-color var(--t-fast) ease, border-color var(--t-fast) ease;
+}
+.sourceWorkspaceTabs button[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 680;
+}
+
+/* Unified Form Inputs & Focus Halo */
+.stageMain :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select:not(.dm-select__native), textarea),
+.stageMain :is(.dmSelect, .dm-select) > .dm-select__button {
+  border-radius: var(--r-ctrl);
+  border-color: var(--line-strong);
+  background: var(--card);
+  transition: border-color var(--t-fast) ease, box-shadow var(--t-fast) ease, background-color var(--t-fast) ease;
+}
+.stageMain :is(input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), select:not(.dm-select__native), textarea):focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+/* Unified Date Field (seamless input + trigger pair) */
+.stageMain .dm-date-field {
+  gap: 6px;
+}
+.stageMain .dm-date-field > button.dm-date-trigger {
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-ctrl);
+  background: var(--card);
+  color: var(--accent-ink);
+}
+.stageMain .dm-date-field > button.dm-date-trigger:hover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+
+/* Badges */
+.badge {
+  border-radius: var(--r-pill);
+  font-weight: 600;
+  font-size: 11.5px;
+  letter-spacing: 0.01em;
+}
+
+/* Floating Modern Toast Notification (#notice) */
+#notice {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 9500;
+  max-width: min(440px, calc(100vw - 32px));
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--t1);
+  font-size: 13.5px;
+  font-weight: 560;
+  line-height: 1.5;
+  box-shadow: var(--chestnut-popover-shadow);
+  animation: toastSlideIn 220ms var(--ease-out-expo);
+}
+#notice:empty {
+  display: none;
+}
+#notice[data-tone="ok"]:not(:empty) {
+  padding-inline-start: 50px;
+  background-image: url('/brand/chestnut-avatar.webp');
+  background-position: 12px center;
+  background-size: 28px;
+  background-repeat: no-repeat;
+  background-color: var(--good-bg);
+  border-color: var(--good-line);
+  color: var(--good);
+}
+#notice[data-tone="info"] {
+  background: var(--info-bg);
+  border-color: var(--info-line);
+  color: var(--info);
+}
+#notice[data-tone="error"] {
+  background: var(--crit-bg);
+  border-color: var(--crit-line);
+  color: var(--crit);
+}
+@media (max-width: 700px) {
+  #notice {
+    top: auto;
+    bottom: 18px;
+    left: 16px;
+    right: 16px;
+    max-width: none;
+  }
+}
+
+/* ==========================================================================
+   4. Account Overview (#overview) — Dark Obsidian-Copper Telemetry Command Deck
+   ========================================================================== */
+#overview #accountMetrics {
+  position: relative;
+  background: linear-gradient(135deg, var(--flow-dark) 0%, var(--flow-dark-2) 55%, #342419 100%);
+  color: #faf7f2;
+  border: 1px solid color-mix(in srgb, var(--accent) 32%, #2c2620);
+  border-radius: var(--r-card);
+  box-shadow: 0 10px 28px rgb(29 22 15 / 14%);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Live data-flow luminous beam across the top edge of the telemetry deck */
+#overview #accountMetrics::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--flow-cyan) 22%,
+    var(--flow-amber) 50%,
+    var(--accent) 76%,
+    transparent 100%
+  );
+  background-size: 220% 100%;
+  z-index: 2;
+}
+
+#overview #accountMetrics[aria-busy="true"]::before {
+  animation: telemetryBeam 2s linear infinite;
+}
+
+#overview #accountMetrics::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(45% 90% at 88% 0%, color-mix(in srgb, var(--accent) 18%, transparent), transparent 72%),
+    radial-gradient(35% 80% at 12% 100%, color-mix(in srgb, var(--flow-cyan) 14%, transparent), transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#accountMetrics > section {
+  position: relative;
+  z-index: 1;
+  padding: clamp(18px, 2.2vw, 28px);
+  transition: background-color var(--t-fast) ease;
+}
+#accountMetrics > section:hover {
+  background: rgb(255 255 255 / 3.5%);
+}
+#accountMetrics > section + section {
+  border-inline-start: 1px solid var(--flow-dark-line);
+}
+#overview #accountMetrics h2 {
+  color: #e9d9cc;
+  font-size: 13px;
+  font-weight: 560;
+  letter-spacing: 0.01em;
+}
+#overview #accountMetrics strong {
+  color: #ffffff;
+  font-size: clamp(28px, 3vw, 44px);
+  font-weight: 740;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+#overview #accountMetrics small {
+  color: #cbbab0;
+  font-size: 12px;
+}
+
+/* Chestnut Empty State with Studio Presence */
+#accountEmpty {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(42% 90% at 32% 50%, color-mix(in srgb, var(--accent-bg) 75%, transparent), transparent 70%),
+    var(--card);
+  padding: clamp(24px, 3vw, 36px);
+}
+#accountEmpty img {
+  filter: drop-shadow(0 10px 18px rgb(64 40 20 / 12%));
+}
+
+/* Platform Cards in Overview */
+#accountRows .platformCard {
+  transition: background-color var(--t-fast) ease, border-color var(--t-fast) ease;
+}
+.platformSummary {
+  transition: background-color var(--t-fast) ease;
+}
+.platformSummary:hover {
+  background: var(--bg-elevated);
+}
+.platformNumbers b {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+/* ==========================================================================
+   5. Content Workflow (#workflow) — Connected Live Data-Flow Pipeline
+   ========================================================================== */
+#pipeline {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 18px;
+  margin: 16px 0 22px;
+}
+
+#pipeline button {
+  position: relative;
+  display: grid;
+  justify-content: stretch;
+  text-align: left;
+  padding: 18px 20px;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+  overflow: visible;
+  transition:
+    transform var(--t-mid) var(--ease-out-expo),
+    border-color var(--t-fast) ease,
+    box-shadow var(--t-mid) var(--ease-out-expo);
+}
+
+/* Top color telemetry accent hairline on each stage node */
+#pipeline button::before {
+  content: "";
+  position: absolute;
+  inset: 0 14px auto 14px;
+  height: 2.5px;
+  border-radius: 0 0 4px 4px;
+  background: var(--stage, var(--accent));
+  opacity: 0.72;
+  transition: opacity var(--t-fast) ease, inset var(--t-mid) var(--ease-out-expo);
+}
+
+/* Animated Data-Flow Conduit connecting Stage N -> Stage N+1 on desktop */
+@media (min-width: 901px) {
+  #pipeline button:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -19px;
+    width: 19px;
+    height: 2px;
+    transform: translateY(-50%);
+    background: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--stage, var(--accent)) 35%, var(--line)),
+      var(--flow-cyan),
+      color-mix(in srgb, var(--stage, var(--accent)) 35%, var(--line))
+    );
+    background-size: 200% 100%;
+    pointer-events: none;
+    z-index: 2;
+  }
+}
+
+#pipeline button:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--stage, var(--accent)) 55%, var(--line));
+  box-shadow: var(--shadow-hover);
+}
+#pipeline button:hover::before {
+  opacity: 1;
+  inset: 0 0 auto 0;
+  border-radius: var(--r-card) var(--r-card) 0 0;
+}
+
+#pipeline small {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 640;
+  color: var(--t2);
+}
+#pipeline small::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--stage, var(--accent));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--stage, var(--accent)) 18%, transparent);
+  margin-right: 0;
+  flex: none;
+}
+#pipeline strong {
+  font-size: clamp(28px, 2.6vw, 38px);
+  font-weight: 760;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--t1);
+}
+#pipeline span {
+  border-top: 1px solid var(--line);
+  padding-top: 9px;
+  font-size: 12px;
+  color: var(--t3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  #pipeline {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+/* First-project onboarding card with subtle Chestnut tech framing */
+#firstProject {
+  position: relative;
+  background:
+    radial-gradient(45% 110% at 96% 10%, color-mix(in srgb, var(--flow-cyan) 8%, transparent), transparent 68%),
+    radial-gradient(38% 100% at 0% 100%, color-mix(in srgb, var(--accent-bg) 70%, transparent), transparent 72%),
+    var(--card);
+}
+
+/* Focus Bento & Progress Bento */
+.homeLead .focusBento {
+  background: linear-gradient(115deg, #f3ebdc 0%, #faf8f4 46%, var(--card) 74%);
+  border: 1px solid var(--line);
+}
+#stageMix {
+  height: 10px;
+  border-radius: var(--r-pill);
+  background: var(--subtle);
+  padding: 2px;
+}
+#stageMix > * {
+  border-radius: var(--r-pill);
+}
+#weekTrend i,
+#reachTrend i {
+  background: linear-gradient(180deg, var(--accent), color-mix(in srgb, var(--flow-cyan) 60%, var(--accent)));
+  border-radius: 5px 5px 2px 2px;
+  transition: opacity var(--t-fast) ease, transform var(--t-fast) var(--ease-out-expo);
+}
+#weekTrend div:hover i,
+#reachTrend div:hover i {
+  transform: scaleY(1.06);
+  transform-origin: bottom;
+}
+
+/* ==========================================================================
+   6. Batch Detail (#detail) — 5-Stage Connected Data-Flow Stepper
+   ========================================================================== */
+#stages {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 22px;
+}
+#stages li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 13px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--t2);
+  font-size: 13.5px;
+  font-weight: 620;
+  transition: border-color var(--t-fast) ease, background-color var(--t-fast) ease, box-shadow var(--t-fast) ease;
+}
+#stages li span {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--t3);
+}
+#stages li.done {
+  background: var(--good-bg);
+  border-color: var(--good-line);
+  color: var(--good);
+}
+#stages li.done span {
+  color: var(--good);
+}
+#stages li.current {
+  background: linear-gradient(135deg, var(--accent-bg), var(--card));
+  border-color: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: 0 4px 14px rgb(200 79 24 / 12%);
+}
+#stages li.current span {
+  color: var(--accent);
+  font-weight: 650;
+}
+@media (min-width: 901px) {
+  #stages li:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -13px;
+    width: 13px;
+    height: 2px;
+    transform: translateY(-50%);
+    background: var(--line-strong);
+    z-index: 2;
+  }
+  #stages li.done:not(:last-child)::after {
+    background: linear-gradient(90deg, var(--good), var(--flow-cyan));
+  }
+  #stages li.current:not(:last-child)::after {
+    background: linear-gradient(90deg, var(--accent), var(--flow-cyan), var(--line-strong));
+    background-size: 200% 100%;
+  }
+  #detail:has(button[aria-busy="true"]) #stages li.current:not(:last-child)::after {
+    animation: dataFlowPulse 2s linear infinite;
+  }
+}
+@media (max-width: 900px) {
+  #stages {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ==========================================================================
+   7. Collection, Import (#setup), Library (#library), Publishing & Settings
+   ========================================================================== */
+.mediaModeCard,
+.kindCard,
+.sourceEntryChoice {
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--card);
+  transition: border-color var(--t-fast) ease, background-color var(--t-fast) ease, transform var(--t-fast) var(--ease-out-expo), box-shadow var(--t-fast) ease;
+}
+.mediaModeCard:hover,
+.kindCard:hover,
+.sourceEntryChoice:hover {
+  border-color: var(--accent-line);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+.mediaModeCard.active,
+.kindCard.active {
+  background: var(--accent-bg);
+  border-color: var(--accent);
+  box-shadow: 0 2px 10px rgb(200 79 24 / 10%);
+}
+
+/* Library chips & reading rhythm */
+#library .lib-chip {
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  box-shadow: none;
+  background: var(--card);
+  transition: all var(--t-fast) ease;
+}
+#library .lib-chip:hover {
+  border-color: var(--accent-line);
+  color: var(--accent-ink);
+}
+#library .lib-chip.active {
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
+  color: #ffffff;
+}
+
+/* Context Flow Strip (subtle live pipeline breadcrumb injected by workbench-ux.js) */
+.dmFlowStrip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 0 0 18px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--card) 86%, var(--bg));
+  font-size: 12.5px;
+  color: var(--t3);
+}
+.dmFlowStrip[hidden] {
+  display: none;
+}
+.dmFlowStrip .flowStep {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--t2);
+  font-size: 12.5px;
+  font-weight: 560;
+  cursor: pointer;
+}
+.dmFlowStrip .flowStep:hover {
+  background: var(--subtle);
+  color: var(--t1);
+}
+.dmFlowStrip .flowStep[aria-current="step"] {
+  background: var(--accent-bg);
+  border-color: var(--accent-line);
+  color: var(--accent-ink);
+  font-weight: 680;
+}
+.dmFlowStrip .flowSep {
+  width: 14px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--line-strong), var(--flow-cyan));
+  opacity: 0.55;
+  flex: none;
+}
+.dmFlowStrip .flowTag {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--t3);
+}
+.dmFlowStrip .flowDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--flow-cyan);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--flow-cyan) 18%, transparent);
+}
+
+/* ==========================================================================
+   8. Native <dialog> Command Palette & Modern Dialog Transitions
+   ========================================================================== */
+dialog {
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: var(--chestnut-popover-shadow);
+  transition: opacity 180ms var(--ease-out-expo), transform 220ms var(--ease-out-expo), display 180ms allow-discrete, overlay 180ms allow-discrete;
+}
+dialog::backdrop {
+  background: rgb(23 19 15 / 42%);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+@starting-style {
+  dialog[open] {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+
+dialog#dmCommandPalette {
+  width: min(560px, calc(100vw - 24px));
+  padding: 0;
+  overflow: hidden;
+  background: var(--card);
+}
+.cmdHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-elevated);
+}
+.cmdHead img {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex: none;
+}
+.cmdHead input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  min-height: 36px;
+  border: 0 !important;
+  background: transparent !important;
+  padding: 0 4px !important;
+  font-size: 15px;
+  color: var(--t1);
+  box-shadow: none !important;
+}
+.cmdHead input:focus-visible {
+  outline: none;
+}
+.cmdHead .cmdEsc {
+  font-size: 11px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--t3);
+  cursor: pointer;
+  min-height: 26px;
+}
+.cmdList {
+  max-height: min(380px, 60dvh);
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.cmdItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--t1);
+  text-align: left;
+  cursor: pointer;
+}
+.cmdItem:hover,
+.cmdItem[aria-selected="true"] {
+  background: var(--accent-bg);
+  border-color: var(--accent-line);
+  color: var(--accent-ink);
+}
+.cmdItemTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+.cmdItemHint {
+  font-size: 12px;
+  color: var(--t3);
+}
+.cmdEmpty {
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--t3);
+  font-size: 13px;
+}
+.cmdFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  background: var(--bg-elevated);
+  font-size: 11.5px;
+  color: var(--t3);
+}
+
+/* ==========================================================================
+   9. Keyframes & Reduced-Motion Compliance
+   ========================================================================== */
+@keyframes telemetryBeam {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes dataFlowPulse {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+@keyframes beaconPulse {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 42%, transparent); }
+  70% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--good) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--good) 0%, transparent); }
+}
+
+@keyframes toastSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmerSweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ==========================================================================
+   10. Dark Studio Theme (UX-03), Live Data-Flow Bar (UX-04),
+       Interactive Telemetry (UX-05), Shimmer (UX-06),
+       Sticky Stepper & Floating Basket Dock (UX-08/09), Popover Polish (UX-10)
+   ========================================================================== */
+html[data-dm-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141210;
+  --bg-elevated: #1c1916;
+  --card: #211d1a;
+  --subtle: #2a2520;
+  --subtle-hover: #352e28;
+  --line: #362f29;
+  --line-strong: #4d433b;
+  --t1: #f5f0e8;
+  --t2: #c9bfb3;
+  --t3: #9a8f82;
+  --accent: #e0632b;
+  --accent-solid: #d2571f;
+  --accent-hover: #e8723c;
+  --accent-bg: #332018;
+  --accent-line: #6b3822;
+  --accent-ink: #ffb38a;
+  --good: #4cc38a;
+  --good-bg: #172b22;
+  --good-line: #28503d;
+  --info: #68b5e8;
+  --info-bg: #172633;
+  --info-line: #294861;
+  --warn: #f0b24a;
+  --warn-bg: #2e2414;
+  --warn-line: #5c4522;
+  --crit: #f26d63;
+  --crit-bg: #301a18;
+  --crit-line: #5e2d29;
+  --shadow: 0 2px 6px rgb(0 0 0 / 28%), 0 10px 26px rgb(0 0 0 / 24%);
+  --shadow-hover: 0 6px 16px rgb(0 0 0 / 38%), 0 16px 34px rgb(0 0 0 / 32%);
+}
+
+html[data-dm-theme="dark"] .homeLead .focusBento {
+  background: linear-gradient(115deg, #2a2119 0%, #231e1a 52%, var(--card) 85%);
+}
+html[data-dm-theme="dark"] .folio,
+html[data-dm-theme="dark"] .folio span {
+  background: #3b2d21;
+  color: #f5ebd9;
+}
+
+/* Theme Toggle Button in Sidebar Rail */
+.dmThemeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 5px 10px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--bg-elevated);
+  color: var(--t2);
+  font-size: 12px;
+  font-weight: 560;
+  cursor: pointer;
+}
+.dmThemeBtn:hover {
+  border-color: var(--accent-line);
+  background: var(--card);
+  color: var(--t1);
+}
+
+/* UX-04: Collection & Multimodal Live Data-Flow Pipeline Bar */
+.dmCollectFlowBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 8px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: linear-gradient(90deg, var(--bg-elevated), var(--card));
+  font-size: 12px;
+}
+.dmCollectFlowBar .cfNode {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--subtle);
+  color: var(--t3);
+  font-weight: 560;
+}
+.dmCollectFlowBar .cfNode.done {
+  background: var(--good-bg);
+  color: var(--good);
+  border: 1px solid var(--good-line);
+}
+.dmCollectFlowBar .cfNode.active {
+  background: var(--accent-bg);
+  color: var(--accent-ink);
+  border: 1px solid var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.dmCollectFlowBar .cfNode.warn {
+  background: var(--warn-bg);
+  color: var(--warn);
+  border: 1px solid var(--warn-line);
+}
+.dmCollectFlowBar .cfWire {
+  width: 12px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--line-strong), var(--flow-cyan));
+  border-radius: 2px;
+}
+.dmCollectFlowBar[data-active="true"] .cfWire {
+  background: linear-gradient(90deg, var(--accent), var(--flow-cyan), var(--accent));
+  background-size: 200% 100%;
+  animation: dataFlowPulse 1.8s linear infinite;
+}
+
+/* UX-05: Interactive Telemetry Bar Hover & Tooltip Badge */
+#reachTrend > div,
+#weekTrend > div {
+  position: relative;
+  border-radius: 8px;
+  padding: 4px 2px;
+  transition: background-color var(--t-fast) ease;
+}
+#reachTrend > div:hover,
+#weekTrend > div:hover {
+  background: color-mix(in srgb, var(--accent-bg) 55%, transparent);
+}
+#reachTrend > div[title]:hover::after,
+#weekTrend > div[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  white-space: nowrap;
+  padding: 4px 9px;
+  border-radius: 7px;
+  background: var(--flow-dark);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgb(0 0 0 / 22%);
+  pointer-events: none;
+}
+
+/* UX-06: Shimmer Skeleton Loading on Busy Surfaces */
+#accountMetrics[aria-busy="true"] strong,
+.sourceList[aria-busy="true"],
+#library .lib-list:empty + .lib-detail:empty {
+  background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--accent) 10%, transparent) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmerSweep 1.8s linear infinite;
+  border-radius: 6px;
+}
+
+/* UX-07: Elevated Modal-Like Framing for Inline Report & Account Setup Cards */
+#reportForm:not([hidden]),
+#platformSetup:not([hidden]) {
+  position: relative;
+  border: 1.5px solid var(--accent-line);
+  box-shadow: var(--chestnut-popover-shadow);
+  background:
+    radial-gradient(50% 60% at 96% 0%, color-mix(in srgb, var(--accent-bg) 75%, transparent), transparent 70%),
+    var(--card);
+  animation: toastSlideIn 200ms var(--ease-out-expo);
+}
+
+/* UX-08: Batch Detail (#detail) Sticky 5-Stage Progress Bar */
+@media (min-width: 901px) {
+  #detail > #stages {
+    position: sticky;
+    top: 10px;
+    z-index: 25;
+    padding: 8px;
+    border-radius: 15px;
+    background: color-mix(in srgb, var(--bg) 88%, var(--card));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--line);
+    box-shadow: 0 4px 16px rgb(31 24 16 / 6%);
+  }
+}
+
+/* UX-09: Library Floating Basket Dock & Item Card Rhythm */
+#library .lib-collection:has(#library .lib-review:not([hidden])),
+#library .lib-collection[data-has-items="true"] {
+  position: sticky;
+  bottom: 14px;
+  z-index: 30;
+  border: 1.5px solid var(--accent);
+  background: color-mix(in srgb, var(--card) 95%, var(--accent-bg));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--chestnut-popover-shadow);
+}
+#library .lib-row {
+  transition: background-color var(--t-fast) ease, border-color var(--t-fast) ease;
+}
+#library .lib-row:has(input[type="checkbox"]:checked) {
+  background: color-mix(in srgb, var(--accent-bg) 55%, var(--card));
+  border-radius: 10px;
+}
+
+/* UX-10: Custom Select & Date Picker Popover Smooth Entry */
+.dm-select__list:not([hidden]),
+.dm-date-picker:not([hidden]) {
+  animation: toastSlideIn 150ms var(--ease-out-expo);
+}
+
+@media (max-width: 1179px) {
+  .brand {
+    grid-template-columns: 34px minmax(0, 1fr);
+    column-gap: 8px;
+  }
+  .brand .mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+  .cmdTriggerBtn {
+    width: 40px;
+    flex: 0 0 40px;
+    justify-content: center;
+  }
+  .cmdTriggerBtn kbd, .cmdTriggerBtn .cmdLeft > span {
+    display: none;
+  }
+  .dmFlowStrip .flowTag {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #overview #accountMetrics::before,
+  #pipeline button::after,
+  #stages li::after,
+  .light.ok::before,
+  .dmFlowStrip .flowDot,
+  #notice {
+    animation: none !important;
+  }
+  button, dialog, #pipeline button, .mediaModeCard, .kindCard, .sourceEntryChoice {
+    transition: none !important;
+  }
+}

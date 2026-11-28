@@ -30,7 +30,7 @@ def recommendations(materials, insights, themes):
     for item in insights:
         terms = re.findall(
             r"[A-Za-z][A-Za-z0-9_-]{3,}|[\u3400-\u9fff]+",
-            item["quote"][:2000].casefold(),
+            item.get('analysis_text', item["quote"])[:2000].casefold(),
         )
         for term in dict.fromkeys(terms):
             if term not in common and len(term) <= 32:
@@ -61,7 +61,7 @@ def recommendations(materials, insights, themes):
             "key": str(item["id"]),
             "title": materials[item["id"] - 1]["title"],
             "ids": [item["id"]],
-            "reason": "原句命中分析关键词" if item["matched"] else "有一条可追溯原句",
+            "reason": ("内容解析命中关键词" if item['matched'] else "有可追溯的内容解析依据") if item.get('source_kind') == 'analysis' else ("原句命中分析关键词" if item["matched"] else "有一条可追溯原句"),
         }
         for item in insights
     ]

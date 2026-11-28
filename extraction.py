@@ -84,7 +84,7 @@ def pdf_rows(content):
     return rows
 
 
-def transcript(content, suffix):
+def transcript(content, suffix, with_segments=False):
     base = os.getenv("DM_ASR_BASE_URL", "").rstrip("/")
     model = os.getenv("DM_ASR_MODEL", "")
     if not base or not model:
@@ -139,6 +139,16 @@ def transcript(content, suffix):
                     timeout=120,
                 )
             response.raise_for_status()
-            return response.json()["text"]
+            data = response.json()
+            if not isinstance(data.get('text'), str) or not data['text'].strip():
+                raise ValueError('转写没有返回有效文字')
+            if with_segments:
+                segments = []
+                for row in data.get('segments', [])[:2000]:
+                    start, end = float(row['start']), float(row['end'])
+                    if 0 <= start < end and isinstance(row.get('text'), str) and row['text'].strip():
+                        segments.append({'start': start, 'end': end, 'text': row['text'][:5000]})
+                return {'text': data['text'], 'segments': segments, 'language': str(data.get('language') or '')[:40]}
+            return data['text']
         except (httpx.HTTPError, ValueError, KeyError) as exc:
             raise HTTPException(502, "转写服务未返回可用文字") from exc

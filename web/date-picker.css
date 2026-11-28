@@ -1,0 +1,110 @@
+/* Scoped component styles inherit the shared chestnut palette. */
+.dm-date-field {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+.dm-date-field > input.dm-date-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 42px;
+  font-variant-numeric: tabular-nums;
+  color-scheme: light;
+}
+.dm-date-input::-webkit-calendar-picker-indicator { display: none; -webkit-appearance: none; }
+.dm-date-field > button.dm-date-trigger,
+.dm-date-picker button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-ctrl, 9px);
+  background: transparent;
+  color: var(--t1, #292723);
+  font: inherit;
+  line-height: 1;
+  box-shadow: none;
+  cursor: pointer;
+}
+.dm-date-field > button.dm-date-trigger {
+  flex: 0 0 42px;
+  width: 42px;
+  border: 1px solid var(--line, #e6dfd5);
+  background: var(--card, #fff);
+  color: var(--accent-ink, #913b16);
+}
+.dm-date-field.dm-date-range > input[hidden] { display: none; }
+.dm-date-field.dm-date-range > button.dm-date-trigger[aria-haspopup] {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 12px;
+  font-variant-numeric: tabular-nums;
+}
+.dm-date-range .dm-date-trigger svg { flex-shrink: 0; }
+.dm-date-field:has(input:is(:disabled, [readonly])) > .dm-date-trigger {
+  opacity: .45;
+  pointer-events: none;
+}
+.dm-date-picker {
+  position: fixed;
+  inset: auto;
+  z-index: 10000;
+  box-sizing: border-box;
+  width: min(308px, calc(100vw - 16px));
+  max-width: calc(100vw - 16px);
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border: 1px solid var(--line, #e6dfd5);
+  border-radius: var(--r-card, 14px);
+  background: var(--card, #fff);
+  color: var(--t1, #292723);
+  box-shadow: var(--chestnut-popover-shadow, 0 12px 36px rgb(64 43 24 / 16%));
+  font: 14px/1.5 var(--sans, system-ui, sans-serif);
+  font-variant-numeric: tabular-nums;
+  color-scheme: light;
+  scrollbar-color: var(--line-strong, #c9bfb2) var(--subtle, #f3efe8);
+}
+.dm-date-picker[hidden] { display: none !important; }
+.dm-date-header { display: flex; align-items: center; gap: 4px; }
+.dm-date-header > button { flex: 0 0 40px; width: 40px; }
+.dm-date-selects { display: flex; gap: 4px; flex: 1; min-width: 0; }
+.dm-date-picker select {
+  box-sizing: border-box;
+  width: auto;
+  min-width: 0;
+  min-height: 42px;
+  flex: 1;
+  margin: 0;
+  padding: 4px;
+  border: 1px solid var(--line, #e6dfd5);
+  border-radius: var(--r-ctrl, 9px);
+  background: var(--card, #fff);
+  color: var(--t1, #292723);
+  font: inherit;
+  cursor: pointer;
+}
+.dm-date-caption { margin: 8px 4px 4px; color: var(--t2, #575149); font-size: 13px; }
+.dm-date-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0; }
+.dm-date-week > [role="columnheader"] { padding: 8px 0; text-align: center; color: var(--t3, #6f665c); font-size: 12px; }
+.dm-date-picker .dm-date-week > button { width: 100%; min-width: 0; min-height: 40px; border: 1px solid transparent; }
+.dm-date-picker button:hover:not(:disabled),
+.dm-date-field > button.dm-date-trigger:hover { background: var(--subtle, #f3efe8); color: var(--accent-ink, #913b16); }
+.dm-date-picker .dm-date-week > button[aria-current="date"] { border-color: var(--accent-line, #e9bea2); color: var(--accent-ink, #913b16); font-weight: 700; }
+.dm-date-picker .dm-date-week > button[aria-selected="true"] { background: var(--accent-solid, #c6501a); color: #fff; font-weight: 700; }
+.dm-date-picker button:disabled { color: var(--t3, #6f665c); opacity: .4; cursor: default; }
+.dm-date-picker :is(button, select):focus-visible,
+.dm-date-field > button.dm-date-trigger:focus-visible { outline: 2px solid var(--accent, #c8521b); outline-offset: 2px; }
+.dm-date-footer { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line, #e6dfd5); }
+.dm-date-picker .dm-date-footer > button { min-width: 64px; padding: 0 12px; color: var(--accent-ink, #913b16); }
+.dm-date-picker ::selection { background: var(--accent-bg, #fff0e5); color: var(--accent-ink, #913b16); }

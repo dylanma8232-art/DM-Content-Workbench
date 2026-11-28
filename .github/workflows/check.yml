@@ -34,3 +34,14 @@ jobs:
       - run: python -m pip install -r requirements.txt playwright
       - run: python -m playwright install --with-deps chrome
       - run: python tests/browser_acceptance.py
+      - run: python tests/workflow_overview_browser.py
+      - run: python -m unittest discover -s tests -p library_browser.py
+      - run: python -m unittest discover -s tests -p collection_media_browser.py
+      - run: python -m unittest discover -s tests -p publishing_browser.py
+      - run: python -m unittest discover -s tests -p long_lists_browser.py
+      - run: python -m unittest discover -s tests -p test_account_daily.py
+        env:
+          DM_ACCOUNT_BROWSER_TEST: '1'
+      - run: python tests/date-picker-browser.py
+      - run: node --test tools/publish-extension/*.test.mjs
+      - run: python tests/release_browser.py

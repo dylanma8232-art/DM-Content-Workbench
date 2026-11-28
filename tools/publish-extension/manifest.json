@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "DM 发布助手",
+  "version": "1.4.0",
+  "minimum_chrome_version": "106",
+  "description": "从本机工作台填入发布草稿，或采集平台页面上展示的作品。",
+  "permissions": ["activeTab", "scripting", "storage", "alarms"],
+  "host_permissions": ["http://localhost/*", "http://127.0.0.1/*"],
+  "optional_host_permissions": ["https://creator.douyin.com/*", "https://www.instagram.com/*", "https://www.tiktok.com/*", "https://www.douyin.com/*", "https://www.xiaohongshu.com/*", "https://www.bilibili.com/*", "https://space.bilibili.com/*", "https://search.bilibili.com/*", "https://x.com/*"],
+  "background": {"service_worker": "background.js", "type": "module"},
+  "action": {"default_popup": "popup.html", "default_title": "DM 发布助手"},
+  "content_scripts": [{"matches": ["http://localhost/*", "http://127.0.0.1/*"], "js": ["bridge.js"]}]
+}
