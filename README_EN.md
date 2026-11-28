@@ -2,7 +2,7 @@
 
 # DM Content Workbench (`DM-Content-Workbench`)
 
-**Turn scattered interviews and multi-platform materials into evidence-backed topics and reviewed drafts — with deep browser collection, verbatim evidence verification, versioned draft archiving, and multi-platform account analytics in one local SQLite workspace**
+**Collect materials, find quote-backed topics, review draft versions, fill publishing forms, and track daily account stats — all in one local web workspace**
 
 <p>
   <a href="README.md"><img alt="简体中文" src="https://img.shields.io/badge/语言-简体中文-2b2927?style=flat-square"></a>
@@ -13,27 +13,41 @@
   <a href="LICENSE"><img alt="License: CC BY-NC-SA 4.0" src="https://img.shields.io/badge/License-CC_BY--NC--SA_4.0-b45309?style=flat-square"></a>
 </p>
 
-[Highlights](#highlights) · [Quick Start](#quick-start) · [What's New in v2.0](#whats-new-in-v20) · [Core Capabilities](#core-capabilities) · [Changelog](CHANGELOG.md) · [License](#license)
+[What It Does](#what-it-does) · [Key Features](#key-features) · [Quick Start](#quick-start) · [Releases](https://github.com/dylanma8232-art/DM-Content-Workbench/releases) · [License](#license)
 
 </div>
 
 ---
 
-## Highlights
+## What It Does
+
+When creating content or running multiple social media accounts, three daily headaches slow everything down:
+
+1. **Materials are scattered everywhere, making it hard to verify original quotes**: saved posts, interview audio, and PDFs live in different folders; when writing, you can't remember where a specific quote came from.
+2. **Draft revisions get messy, and publishing requires repetitive copy-pasting**: after three or four edits, nobody knows which version was approved, and you still have to copy-paste titles and body text into each platform's creator studio.
+3. **Checking daily account metrics means switching across a dozen tabs**: tracking follower growth, views, and engagement across Xiaohongshu, Bilibili, Douyin, WeChat, and X takes too many logins, and missed daily entries go unnoticed.
+
+**`DM Content Workbench`** brings the entire workflow into a single local web app on your computer:
+**collect posts/files and extract text from images & audio → generate topic ideas backed by original quotes → write and approve versioned drafts → fill creator studio forms in one click, while tracking all your accounts' daily stats on one dashboard.**
+
+---
+
+## Key Features
 
 <p align="center">
-  <img src="assets/overview.png" alt="Account Overview — multi-platform metrics, unreported reminders, and 7-day trends" width="100%">
+  <img src="assets/overview.png" alt="Account Overview — multi-platform metrics, missing-report reminders, and 7-day trends" width="100%">
+  <br><sub><b>All account daily metrics on one screen</b>: track followers, views, engagement, posts, and 7-day trends across platforms with one-click reminders for missing daily reports</sub>
 </p>
 
 <table>
   <tr>
     <td width="50%" align="center" valign="top">
-      <img src="assets/evidence.png" alt="Cross-source topic candidates with verbatim quotes" width="100%">
-      <br><sub><b>Evidence-backed topics</b>: verify every suggested angle against verbatim source quotes and visual observations</sub>
+      <img src="assets/evidence.png" alt="Quote-backed topic ideas" width="100%">
+      <br><sub><b>Quote-backed topics</b>: every topic suggestion attaches verbatim quotes and visual notes so you can jump straight back to the source material</sub>
     </td>
     <td width="50%" align="center" valign="top">
-      <img src="assets/draft-review.png" alt="Versioned draft review and export" width="100%">
-      <br><sub><b>Versioned review & one-click publish</b>: review decisions bind to exact draft versions, ready for Notion/Feishu archiving or extension draft filling</sub>
+      <img src="assets/draft-review.png" alt="Versioned draft review and publishing" width="100%">
+      <br><sub><b>Versioned review & one-click form filling</b>: approve specific draft versions, archive to Notion/Feishu, or auto-fill creator studio draft forms via the companion browser extension</sub>
     </td>
   </tr>
 </table>
@@ -42,7 +56,7 @@
 
 ## Quick Start
 
-Requires **Python 3.12** (UI is in Simplified Chinese; works 100% locally with SQLite and no external cloud accounts required):
+Requires **Python 3.12** (UI is in Simplified Chinese; runs 100% locally with SQLite and requires no external cloud accounts):
 
 ```bash
 git clone https://github.com/dylanma8232-art/DM-Content-Workbench.git
@@ -50,19 +64,12 @@ cd DM-Content-Workbench
 
 python3.12 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python tools/start_local_workbench.py --no-browser
+.venv/bin/python tools/start_local_workbench.py
 ```
 
 Open `http://127.0.0.1:8765` in your browser (or double-click `启动工作台.command` on macOS). For Docker self-hosting, run `docker compose up --build -d --wait`.
 
-## What's New in v2.0
-
-- **Chestnut IP & Dual Studio Themes**: Warm Stone Light mode (`#FAF8F4`) and Obsidian Dark Studio mode (`html[data-dm-theme="dark"]`) with one-click toggle in the sidebar and `⌘K` command palette, plus redesigned self-contained browser extension popup (`popup.html`) and Douyin connect card (`douyin-connect.html`).
-- **Live Data-Flow Pipelines & Micro-Interactions**: 5-step production pipeline bar (`Collect → Materials → Topics → Drafts → Publish`), 4-node live collection progress strip (`List Probe → Detail Expansion → Subtitle/ASR → Frame OCR & Ingest`), sticky glassmorphism stage bar, and floating material collection dock.
-- **Multimodal Deep Collection & Local AI**: Companion Chrome/Edge extension for deep collection across Xiaohongshu, Bilibili, Douyin, YouTube, X, Instagram, and TikTok, paired with local image storage, Apple Vision / Tesseract OCR, local Whisper.cpp / MLX speech transcription, and one-click gap reprocessing.
-- **Online Library Sync & Publishing Desk**: Bi-directional Notion database and Feishu Bitable integration (import materials + archive approved drafts) and a dedicated Publishing Desk that fills approved drafts into creator studio forms via the companion extension.
-
-See the full Chinese guide in [README.md](README.md) and the complete iteration history in [CHANGELOG.md](CHANGELOG.md).
+See the full Chinese guide in [README.md](README.md) and version history in [GitHub Releases](https://github.com/dylanma8232-art/DM-Content-Workbench/releases).
 
 ---
 
